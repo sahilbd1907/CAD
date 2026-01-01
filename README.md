@@ -138,7 +138,7 @@ http://localhost:5000
 
 ## 🎯 Quick Start Guide
 
-![Homepage](screenshots/screenshot-01-homepage.png)
+![Homepage](CAD/screenshots/screenshot-01-homepage.png)
 
 ### Basic Workflow
 
