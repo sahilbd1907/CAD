@@ -394,4 +394,4 @@ This project is open source and available under the MIT License.
 
 **Built for the CNC manufacturing community**
 
-*Precision CNC Solutions - Making manufacturing smarter, one quotation at a time.*
+
