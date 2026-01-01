@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CNC Cutting · Tech support</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+    <link href="/static/css/styles.css" rel="stylesheet">
+    <link href="/branding.css" rel="stylesheet">
+</head>
+<body class="bg-app">
+    <nav class="navbar navbar-expand-lg navbar-glass sticky-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold d-flex align-items-center" href="/">
+                <img src="/static/img/tech_support_logo.jpg" alt="Tech support" height="55" class="me-2" onerror="this.style.display='none'">
+                Tech support
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navContent">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navContent">
+                <ul class="navbar-nav ms-auto align-items-lg-center">
+                    <li class="nav-item me-lg-3"><a class="nav-link" href="#features">Features</a></li>
+                    <li class="nav-item me-lg-3"><a class="nav-link" href="/cnc-cutting">CNC Cutting</a></li>
+                    <li class="nav-item me-lg-3"><a class="nav-link" href="/pricing">Pricing</a></li>
+                    <li class="nav-item me-lg-3"><a class="nav-link" href="/faq">FAQ</a></li>
+                    <li class="nav-item me-lg-3"><a class="nav-link" href="/about">About</a></li>
+                    <li class="nav-item me-lg-3"><a class="nav-link" href="/contact">Contact</a></li>
+                    <li class="nav-item">
+                        <button id="themeToggle" class="btn btn-sm btn-outline-secondary">
+                            <i class="fa-solid fa-moon"></i>
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main class="py-5">
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-12">
+                    <h1 class="fw-bold mb-3">CNC Cutting Guide</h1>
+                    <p class="text-muted lead">An overview of CNC cutting processes, materials, and best practices to help you prepare files for accurate quotes and quality results.</p>
+                </div>
+                <div class="col-lg-8">
+                    <div class="card-elevated p-4">
+                        <h5 class="mb-3"><i class="fa-solid fa-screwdriver-wrench me-2"></i>Processes</h5>
+                        <ul class="text-muted">
+                            <li><strong>Laser Cutting</strong>: High precision for metals and plastics. Minimal kerf, clean edges.</li>
+                            <li><strong>Plasma Cutting</strong>: Fast cutting for thicker metals. Wider kerf, heat-affected zone.</li>
+                            <li><strong>Waterjet Cutting</strong>: No heat-affected zone. Suitable for metals, composites, stone.</li>
+                            <li><strong>Router/End Mill</strong>: Ideal for wood, plastics, aluminum; good for pockets and profiles.</li>
+                        </ul>
+                        <h5 class="mt-4 mb-3"><i class="fa-solid fa-layer-group me-2"></i>Materials & Thickness</h5>
+                        <p class="text-muted">Common materials include steel, aluminum, brass, copper, wood, and plastics. Thickness impacts feed rates, tool selection, and cost. Ensure you select the correct thickness during quote generation.</p>
+                        <h5 class="mt-4 mb-3"><i class="fa-solid fa-ruler-combined me-2"></i>Design Guidelines</h5>
+                        <ul class="text-muted">
+                            <li>Use single, continuous outlines where possible to minimize tool lifts.</li>
+                            <li>Maintain minimum feature sizes relative to tool diameter and material.</li>
+                            <li>Account for kerf width; allow adequate clearance for fits.</li>
+                            <li>Remove duplicate/overlapping entities in DXF to avoid double cutting.</li>
+                        </ul>
+                        <h5 class="mt-4 mb-3"><i class="fa-solid fa-file-lines me-2"></i>File Preparation (DXF)</h5>
+                        <ul class="text-muted">
+                            <li>Export 1:1 scale in millimeters, 2D profiles only.</li>
+                            <li>Place part outlines on a single layer; remove dimensions and title blocks.</li>
+                            <li>Join segments to polylines; avoid splines where possible.</li>
+                            <li>Verify no open contours for profiles intended to be cut through.</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="card-elevated p-4">
+                        <h6 class="text-uppercase text-muted">Why use Tech support</h6>
+                        <ul class="mt-2 text-muted">
+                            <li>Instant DXF parsing and cutting length calculation</li>
+                            <li>Material-aware machining time estimates</li>
+                            <li>Professional PDF quotations</li>
+                        </ul>
+                        <a href="/" class="btn btn-primary w-100 mt-3"><i class="fa-solid fa-calculator me-2"></i>Generate a Quote</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer py-4">
+        <div class="container d-flex flex-column flex-lg-row justify-content-between align-items-center gap-2">
+            <div class="text-muted small">© <span id="yearNow"></span> Tech support</div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
+
+

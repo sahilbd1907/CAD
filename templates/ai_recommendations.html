@@ -1,0 +1,1133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Optimization Recommendations · Tech support</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+    <link href="/static/css/styles.css" rel="stylesheet">
+    <link href="/branding.css" rel="stylesheet">
+    <style>
+        .ai-section {
+            background: linear-gradient(135deg, rgba(79,70,229,0.05) 0%, rgba(6,182,212,0.05) 100%);
+            border: 2px solid var(--brand-primary);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        .ai-badge {
+            background: linear-gradient(135deg, var(--brand-primary), var(--brand-secondary));
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+        .strategy-card {
+            border-left: 4px solid var(--brand-secondary);
+            transition: all 0.3s ease;
+        }
+        .strategy-card:hover {
+            transform: translateX(4px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .savings-badge {
+            background: var(--success);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+        .insight-item {
+            padding: 12px;
+            background: var(--surface-2);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            border-left: 3px solid var(--brand-primary);
+        }
+    </style>
+</head>
+<body class="bg-app">
+    <nav class="navbar navbar-expand-lg navbar-glass sticky-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold d-flex align-items-center" href="/">
+                <img src="/static/img/tech_support_logo.jpg" alt="Tech support" height="55" class="me-2" onerror="this.style.display='none'">
+                Tech support
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navContent">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navContent">
+                <ul class="navbar-nav ms-auto align-items-lg-center">
+                    <li class="nav-item me-lg-3"><a class="nav-link" href="/">Home</a></li>
+                    <li class="nav-item me-lg-3"><a class="nav-link" href="/features/{{ result_id }}">Analysis</a></li>
+                    <li class="nav-item me-lg-3"><a class="nav-link" href="/cnc-cutting">CNC Cutting</a></li>
+                    <li class="nav-item">
+                        <button id="themeToggle" class="btn btn-sm btn-outline-secondary">
+                            <i class="fa-solid fa-moon"></i>
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main class="py-5">
+        <div class="container">
+            <!-- Header -->
+            <div class="row mb-5 fade-in-up">
+                <div class="col-12">
+                    <div class="d-flex align-items-center justify-content-between mb-4">
+                        <div>
+                            <h1 class="display-5 fw-bold mb-2">
+                                <i class="fas fa-robot text-primary me-3"></i>AI Optimization Recommendations
+                            </h1>
+                            <p class="text-muted lead mb-0">Comprehensive AI-powered insights for optimized production</p>
+                        </div>
+                        <span class="ai-badge">
+                            <i class="fas fa-magic me-2"></i>Powered by AI
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loading State -->
+            <div id="aiLoadingSection" class="row mb-5" style="display: {% if comprehensive_ai %}none{% else %}block{% endif %};">
+                <div class="col-12">
+                    <div class="card-elevated p-5 text-center">
+                        <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <h5 class="mb-2">Generating AI Recommendations</h5>
+                        <p class="text-muted mb-0">Analyzing your CAD file with AI... This may take a few moments.</p>
+                        <div class="progress mt-3" style="height: 6px;">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Content (loaded dynamically) -->
+            <!-- Always show Path Optimization and Nesting sections -->
+            <!-- Path Optimization -->
+            <div class="row mb-5 fade-in-up">
+                <div class="col-12">
+                    <div class="ai-section">
+                        <div class="d-flex align-items-center justify-content-between mb-4">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-route text-success me-3" style="font-size: 2rem;"></i>
+                                <div>
+                                    <h3 class="mb-0">Path Optimization Strategies</h3>
+                                    <p class="text-muted mb-0">Optimize cutting paths to reduce machining time</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Path Visualization & TSP Calculation -->
+                        <div class="mb-4">
+                            <div class="card">
+                                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-project-diagram me-2"></i>Path Visualization
+                                        <span class="badge bg-primary ms-2">Industry-Grade Analysis</span>
+                                    </h6>
+                                    <button id="calculateTSPBtn" class="btn btn-sm btn-success" onclick="calculateTSPPath()">
+                                        <i class="fas fa-calculator me-1"></i>Calculate TSP Path
+                                    </button>
+                                </div>
+                                <div class="card-body p-0">
+                                    <div class="position-relative" style="background: #f8fafc; border-radius: 0 0 8px 8px;">
+                                        <canvas id="pathVisualizationCanvas" style="width: 100%; height: 400px; display: block;"></canvas>
+                                        <div class="position-absolute top-0 end-0 m-3">
+                                            <div class="btn-group" role="group">
+                                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="pathVisualizer?.draw()">
+                                                    <i class="fas fa-sync me-1"></i>Refresh
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="togglePathView()">
+                                                    <i class="fas fa-eye me-1"></i>Toggle View
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- TSP Calculation Results -->
+                            <div id="tspResults" class="mt-3" style="display: none;">
+                                <div class="card border-success">
+                                    <div class="card-header bg-success text-white">
+                                        <h6 class="mb-0">
+                                            <i class="fas fa-route me-2"></i>TSP Path Calculation Results
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row g-3 mb-3">
+                                            <div class="col-md-3">
+                                                <div class="text-center p-3 bg-light rounded">
+                                                    <div class="text-muted small mb-1">Original Distance</div>
+                                                    <div class="h5 fw-bold text-primary" id="tspOriginalDistance">-</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="text-center p-3 bg-light rounded">
+                                                    <div class="text-muted small mb-1">Optimized Distance</div>
+                                                    <div class="h5 fw-bold text-success" id="tspOptimizedDistance">-</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="text-center p-3 bg-light rounded">
+                                                    <div class="text-muted small mb-1">Distance Saved</div>
+                                                    <div class="h5 fw-bold text-info" id="tspSavingsDistance">-</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="text-center p-3 bg-light rounded">
+                                                    <div class="text-muted small mb-1">Savings %</div>
+                                                    <div class="h5 fw-bold text-success" id="tspSavingsPercent">-</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <h6>Path Details:</h6>
+                                            <div id="tspPathDetails" class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                                                <!-- TSP path steps will be loaded here -->
+                                            </div>
+                                        </div>
+                                        <div class="alert alert-info">
+                                            <i class="fas fa-info-circle me-2"></i>
+                                            <strong>Algorithm:</strong> <span id="tspAlgorithm">Nearest Neighbor TSP</span>
+                                            <br>
+                                            <strong>Time Savings:</strong> <span id="tspTimeSavings">-</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Nesting Optimization -->
+            <div class="row mb-5 fade-in-up">
+                <div class="col-12">
+                    <div class="ai-section">
+                        <div class="d-flex align-items-center justify-content-between mb-4">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-th text-info me-3" style="font-size: 2rem;"></i>
+                                <div>
+                                    <h3 class="mb-0">Nesting Optimization</h3>
+                                    <p class="text-muted mb-0">Maximize material utilization and reduce waste</p>
+                                </div>
+                            </div>
+                            <button id="calculateNestingBtn" class="btn btn-success" onclick="calculateNesting()">
+                                <i class="fas fa-calculator me-2"></i>Calculate Optimal Nesting
+                            </button>
+                        </div>
+                        
+                        <!-- Nesting Results (loaded dynamically) -->
+                        <div id="nestingResults" style="display: none;">
+                            <!-- Will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- AI Content (loaded dynamically) -->
+            <div id="aiContentSection" style="display: {% if comprehensive_ai %}block{% else %}none{% endif %};">
+            {% if comprehensive_ai %}
+            <!-- Material Recommendations -->
+            {% if comprehensive_ai.material_recommendations %}
+            <div class="row mb-5 fade-in-up">
+                <div class="col-12">
+                    <div class="ai-section">
+                        <div class="d-flex align-items-center mb-4">
+                            <i class="fas fa-layer-group text-primary me-3" style="font-size: 2rem;"></i>
+                            <div>
+                                <h3 class="mb-0">Material Recommendations</h3>
+                                <p class="text-muted mb-0">AI-analyzed alternatives for cost optimization</p>
+                            </div>
+                        </div>
+                        <div class="row g-4">
+                            {% for rec in comprehensive_ai.material_recommendations[:3] %}
+                            <div class="col-lg-4 col-md-6">
+                                <div class="card h-100 strategy-card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start mb-3">
+                                            <h5 class="card-title mb-0">{{ rec.material }}</h5>
+                                            {% if rec.savings > 0 %}
+                                            <span class="savings-badge">Save ₹{{ "%.2f"|format(rec.savings) }}</span>
+                                            {% endif %}
+                                        </div>
+                                        <p class="text-muted small mb-3">{{ rec.reason }}</p>
+                                        <div class="mb-3">
+                                            <strong>Cost:</strong> ₹{{ "%.2f"|format(rec.cost) }}
+                                            {% if rec.time_change %}
+                                            <br><small class="text-muted">Time: {{ "%.1f"|format(rec.time_change) }}% {{ "faster" if rec.time_change < 0 else "slower" }}</small>
+                                            {% endif %}
+                                        </div>
+                                        {% if rec.pros %}
+                                        <div class="mb-2">
+                                            <strong class="text-success small">Pros:</strong>
+                                            <ul class="small mb-0 ps-3">
+                                                {% for pro in rec.pros %}
+                                                <li>{{ pro }}</li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                        {% endif %}
+                                        {% if rec.cons %}
+                                        <div class="mb-2">
+                                            <strong class="text-warning small">Cons:</strong>
+                                            <ul class="small mb-0 ps-3">
+                                                {% for con in rec.cons %}
+                                                <li>{{ con }}</li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                        {% endif %}
+                                        {% if rec.best_for %}
+                                        <div class="mt-3 p-2 bg-light rounded">
+                                            <small><i class="fas fa-info-circle me-1"></i><strong>Best for:</strong> {{ rec.best_for }}</small>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- AI Path Optimization Strategies (if available) -->
+            {% if comprehensive_ai and comprehensive_ai.path_optimization %}
+            <div class="row mb-5 fade-in-up">
+                <div class="col-12">
+                    <div class="ai-section">
+                        <h5 class="mb-3"><i class="fas fa-route text-success me-2"></i>AI Path Optimization Strategies</h5>
+                        {% if comprehensive_ai.path_optimization.optimization_strategies and comprehensive_ai.path_optimization.optimization_strategies|length > 0 %}
+                        <div class="row g-3 mb-4">
+                            {% for strategy in comprehensive_ai.path_optimization.optimization_strategies %}
+                            <div class="col-md-6">
+                                <div class="card strategy-card">
+                                    <div class="card-body">
+                                        <h6 class="card-title">
+                                            <i class="fas fa-lightbulb text-warning me-2"></i>{{ strategy.strategy }}
+                                        </h6>
+                                        <p class="text-muted small mb-2">{{ strategy.description }}</p>
+                                        <div class="mb-2">
+                                            <span class="badge bg-success me-2">{{ strategy.time_savings }} savings</span>
+                                        </div>
+                                        <p class="small text-muted mb-0">
+                                            <i class="fas fa-cog me-1"></i><strong>Implementation:</strong> {{ strategy.implementation }}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        {% if comprehensive_ai.path_optimization.estimated_savings %}
+                        <div class="alert alert-success">
+                            <i class="fas fa-chart-line me-2"></i>
+                            <strong>Estimated Savings:</strong> {{ comprehensive_ai.path_optimization.estimated_savings }}
+                        </div>
+                        {% endif %}
+                        {% if comprehensive_ai.path_optimization.priority_actions %}
+                        <div class="mt-3">
+                            <h6><i class="fas fa-star text-warning me-2"></i>Priority Actions:</h6>
+                            <ul>
+                                {% for action in comprehensive_ai.path_optimization.priority_actions %}
+                                <li>{{ action }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- AI Nesting Optimization (if available) -->
+            {% if comprehensive_ai and comprehensive_ai.nesting_optimization %}
+            <div class="row mb-5 fade-in-up">
+                <div class="col-12">
+                    <div class="ai-section">
+                        <h5 class="mb-3"><i class="fas fa-th text-info me-2"></i>AI Nesting Optimization</h5>
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h6 class="card-title">Recommended Sheet Size</h6>
+                                        <h3 class="text-primary">{{ comprehensive_ai.nesting_optimization.recommended_sheet }}</h3>
+                                        <p class="text-muted mb-0">Optimal sheet for your part dimensions</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h6 class="card-title">Parts Per Sheet</h6>
+                                        <h3 class="text-success">{{ comprehensive_ai.nesting_optimization.parts_per_sheet }}</h3>
+                                        <p class="text-muted mb-0">Maximum parts that can fit</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h6 class="card-title">Material Utilization</h6>
+                                        <h3 class="text-info">{{ comprehensive_ai.nesting_optimization.material_utilization }}</h3>
+                                        <p class="text-muted mb-0">Efficient use of material</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h6 class="card-title">Cost Savings</h6>
+                                        <h3 class="text-success">{{ comprehensive_ai.nesting_optimization.cost_savings }}</h3>
+                                        <p class="text-muted mb-0">Per sheet savings</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% if comprehensive_ai.nesting_optimization.nesting_strategies %}
+                        <div class="mt-4">
+                            <h6>Nesting Strategies:</h6>
+                            <ul>
+                                {% for strategy in comprehensive_ai.nesting_optimization.nesting_strategies %}
+                                <li>{{ strategy }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Manufacturing Insights -->
+            {% if comprehensive_ai.manufacturing_insights %}
+            <div class="row mb-5 fade-in-up">
+                <div class="col-12">
+                    <div class="ai-section">
+                        <div class="d-flex align-items-center mb-4">
+                            <i class="fas fa-cogs text-warning me-3" style="font-size: 2rem;"></i>
+                            <div>
+                                <h3 class="mb-0">Manufacturing Insights</h3>
+                                <p class="text-muted mb-0">Expert recommendations for production</p>
+                            </div>
+                        </div>
+                        <div class="row g-4">
+                            {% if comprehensive_ai.manufacturing_insights.challenges %}
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h6 class="card-title text-warning">
+                                            <i class="fas fa-exclamation-triangle me-2"></i>Challenges
+                                        </h6>
+                                        <ul class="mb-0">
+                                            {% for challenge in comprehensive_ai.manufacturing_insights.challenges %}
+                                            <li>{{ challenge }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            {% if comprehensive_ai.manufacturing_insights.quality_tips %}
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h6 class="card-title text-success">
+                                            <i class="fas fa-check-circle me-2"></i>Quality Tips
+                                        </h6>
+                                        <ul class="mb-0">
+                                            {% for tip in comprehensive_ai.manufacturing_insights.quality_tips %}
+                                            <li>{{ tip }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            {% if comprehensive_ai.manufacturing_insights.tool_recommendations %}
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h6 class="card-title text-primary">
+                                            <i class="fas fa-wrench me-2"></i>Tool Recommendations
+                                        </h6>
+                                        <ul class="mb-0">
+                                            {% for tool in comprehensive_ai.manufacturing_insights.tool_recommendations %}
+                                            <li>{{ tool }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            {% if comprehensive_ai.manufacturing_insights.watch_outs %}
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h6 class="card-title text-danger">
+                                            <i class="fas fa-eye me-2"></i>Watch Outs
+                                        </h6>
+                                        <ul class="mb-0">
+                                            {% for watch in comprehensive_ai.manufacturing_insights.watch_outs %}
+                                            <li>{{ watch }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% if comprehensive_ai.manufacturing_insights.feed_rate_notes %}
+                        <div class="mt-4 alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Feed Rate Notes:</strong> {{ comprehensive_ai.manufacturing_insights.feed_rate_notes }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Design Suggestions -->
+            {% if comprehensive_ai.design_suggestions %}
+            <div class="row mb-5 fade-in-up">
+                <div class="col-12">
+                    <div class="ai-section">
+                        <div class="d-flex align-items-center mb-4">
+                            <i class="fas fa-lightbulb text-warning me-3" style="font-size: 2rem;"></i>
+                            <div>
+                                <h3 class="mb-0">Design Optimization Suggestions</h3>
+                                <p class="text-muted mb-0">Improve your design for better manufacturability</p>
+                            </div>
+                        </div>
+                        <div class="row g-3">
+                            {% for suggestion in comprehensive_ai.design_suggestions %}
+                            <div class="col-md-6">
+                                <div class="card strategy-card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <h6 class="card-title mb-0">{{ suggestion.suggestion }}</h6>
+                                            {% if suggestion.priority == 'high' %}
+                                            <span class="badge bg-danger">High Priority</span>
+                                            {% elif suggestion.priority == 'medium' %}
+                                            <span class="badge bg-warning">Medium</span>
+                                            {% else %}
+                                            <span class="badge bg-info">Low</span>
+                                            {% endif %}
+                                        </div>
+                                        <p class="text-muted small mb-2">
+                                            <strong>Impact:</strong> {{ suggestion.impact }}
+                                        </p>
+                                        <p class="small mb-0">
+                                            <i class="fas fa-quote-left me-1 text-muted"></i>{{ suggestion.reason }}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            {% else %}
+            <!-- No AI Data - Show fallback message -->
+            <div class="row mb-5">
+                <div class="col-12">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>AI recommendations are loading...</strong>
+                        <p class="mb-0 mt-2">This may take a few moments. The page will automatically refresh when ready.</p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            </div>
+            <!-- End AI Content Section -->
+
+            <!-- Action Buttons -->
+            <div class="row mb-5 fade-in-up">
+                <div class="col-12 text-center">
+                    <div class="card-elevated p-4">
+                        <h5 class="mb-4">Ready to Optimize Your Production?</h5>
+                        <div class="d-flex gap-3 justify-content-center flex-wrap">
+                            <a href="/features/{{ result_id }}" class="btn btn-outline-primary btn-lg">
+                                <i class="fas fa-chart-line me-2"></i>View Full Analysis
+                            </a>
+                            <a href="/generate-pdf/{{ result_id }}" class="btn btn-primary btn-lg">
+                                <i class="fas fa-file-pdf me-2"></i>Generate PDF Quotation
+                            </a>
+                            <a href="/" class="btn btn-outline-secondary btn-lg">
+                                <i class="fas fa-upload me-2"></i>Upload Another File
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer py-4">
+        <div class="container d-flex flex-column flex-lg-row justify-content-between align-items-center gap-2">
+            <div class="text-muted small">© <span id="yearNow"></span> Tech support</div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/js/app.js"></script>
+    <script src="/static/js/path_visualizer.js"></script>
+    <script>
+        document.getElementById('yearNow').textContent = new Date().getFullYear();
+        
+        // Initialize path visualizer
+        let pathVisualizer = null;
+        let showOptimized = true;
+        let tspResult = null;
+        const resultId = '{{ result_id }}';
+        
+        // Load geometry data and visualize
+        {% if geometry %}
+        const geometryData = {{ geometry|tojson }};
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize path visualizer
+            pathVisualizer = new PathVisualizer('pathVisualizationCanvas');
+            if (geometryData && geometryData.entities) {
+                pathVisualizer.loadGeometry(geometryData);
+            }
+            
+            // Handle window resize
+            window.addEventListener('resize', function() {
+                if (pathVisualizer) {
+                    pathVisualizer.setupCanvas();
+                    pathVisualizer.draw();
+                }
+            });
+            
+            // Load AI recommendations asynchronously (only if not already loaded)
+            {% if not comprehensive_ai %}
+            loadAIRecommendations();
+            {% endif %}
+        });
+        {% endif %}
+        
+        // Async load AI recommendations
+        async function loadAIRecommendations() {
+            const loadingSection = document.getElementById('aiLoadingSection');
+            const contentSection = document.getElementById('aiContentSection');
+            
+            // Only load if content is not already visible
+            if (contentSection && (contentSection.style.display === 'block' || window.getComputedStyle(contentSection).display === 'block')) {
+                console.log('AI content already loaded');
+                if (loadingSection) loadingSection.style.display = 'none';
+                return;
+            }
+            
+            // Set a timeout to show content even if AI fails
+            const timeoutId = setTimeout(() => {
+                console.log('AI loading timeout - showing content anyway');
+                if (loadingSection) {
+                    loadingSection.innerHTML = `
+                        <div class="alert alert-warning">
+                            <i class="fas fa-clock me-2"></i>
+                            AI recommendations are taking longer than expected. Showing basic recommendations.
+                        </div>
+                    `;
+                }
+                if (contentSection) {
+                    contentSection.style.display = 'block';
+                }
+            }, 30000); // 30 second timeout
+            
+            try {
+                console.log('Loading AI recommendations for:', resultId);
+                const response = await fetch(`/api/ai-analysis/${resultId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                clearTimeout(timeoutId);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                console.log('AI response received:', data.success ? 'Success' : 'Failed');
+                
+                if (data.success && data.data) {
+                    // Cache the AI data and reload page to show it
+                    console.log('AI data loaded successfully, reloading page...');
+                    renderAIRecommendations(data.data);
+                } else {
+                    // Show error but still show content section
+                    console.log('AI loading failed:', data.error);
+                    if (loadingSection) {
+                        loadingSection.innerHTML = `
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                ${data.error || 'Failed to load AI recommendations. Showing basic recommendations.'}
+                            </div>
+                        `;
+                    }
+                    // Show content section anyway (might have rule-based recommendations)
+                    if (contentSection) {
+                        contentSection.style.display = 'block';
+                    }
+                }
+            } catch (error) {
+                clearTimeout(timeoutId);
+                console.error('Error loading AI recommendations:', error);
+                if (loadingSection) {
+                    loadingSection.innerHTML = `
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Error loading AI recommendations: ${error.message}. Showing basic recommendations.
+                        </div>
+                    `;
+                }
+                // Show content section anyway
+                if (contentSection) {
+                    contentSection.style.display = 'block';
+                }
+            }
+        }
+        
+        function renderAIRecommendations(aiData) {
+            // Store AI data globally
+            window.aiData = aiData;
+            console.log('AI data received, reloading page...');
+            
+            // Reload page to show the cached AI data
+            // The data is now cached in results_cache, so reload will show it
+            setTimeout(() => {
+                window.location.reload();
+            }, 300);
+        }
+        
+        // TSP Path Calculation
+        async function calculateTSPPath() {
+            const btn = document.getElementById('calculateTSPBtn');
+            const resultsDiv = document.getElementById('tspResults');
+            
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Calculating...';
+            
+            try {
+                const response = await fetch(`/api/tsp-calculate/${resultId}`);
+                const data = await response.json();
+                
+                if (data.success && data.data) {
+                    tspResult = data.data;
+                    if (tspResult.success !== false) {
+                        displayTSPResults(tspResult);
+                        if (resultsDiv) {
+                            resultsDiv.style.display = 'block';
+                        }
+                        
+                        // Update visualization with optimized path
+                        if (pathVisualizer && tspResult.optimized_path) {
+                            pathVisualizer.optimizedPath = tspResult.optimized_path.map(p => ({
+                                x: p.x || 0,
+                                y: p.y || 0
+                            }));
+                            pathVisualizer.draw();
+                        }
+                    } else {
+                        alert('TSP calculation failed: ' + (tspResult.error || 'Unknown error'));
+                    }
+                } else {
+                    alert('Error calculating TSP path: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('TSP calculation error:', error);
+                alert('Error calculating TSP path. Please try again.');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-calculator me-1"></i>Calculate TSP Path';
+            }
+        }
+        
+        function displayTSPResults(result) {
+            if (!result || !result.success) {
+                console.error('Invalid TSP result:', result);
+                return;
+            }
+            
+            const originalDistEl = document.getElementById('tspOriginalDistance');
+            const optimizedDistEl = document.getElementById('tspOptimizedDistance');
+            const savingsDistEl = document.getElementById('tspSavingsDistance');
+            const savingsPercentEl = document.getElementById('tspSavingsPercent');
+            const algorithmEl = document.getElementById('tspAlgorithm');
+            const timeSavingsEl = document.getElementById('tspTimeSavings');
+            const detailsDiv = document.getElementById('tspPathDetails');
+            
+            if (originalDistEl) originalDistEl.textContent = (result.original_distance || 0) + ' mm';
+            if (optimizedDistEl) optimizedDistEl.textContent = (result.optimized_distance || 0) + ' mm';
+            if (savingsDistEl) savingsDistEl.textContent = (result.savings_distance || 0) + ' mm';
+            if (savingsPercentEl) savingsPercentEl.textContent = (result.savings_percent || 0) + '%';
+            if (algorithmEl) algorithmEl.textContent = result.algorithm || 'Nearest Neighbor TSP';
+            if (timeSavingsEl) timeSavingsEl.textContent = result.time_savings_estimate || '-';
+            
+            // Display path details
+            if (detailsDiv && result.path_details && result.path_details.length > 0) {
+                let html = '<table class="table table-sm table-hover"><thead><tr><th>Step</th><th>X</th><th>Y</th><th>Entity Type</th><th>Point Type</th></tr></thead><tbody>';
+                result.path_details.forEach(step => {
+                    html += `<tr>
+                        <td>${step.step || '-'}</td>
+                        <td>${step.x || 0}</td>
+                        <td>${step.y || 0}</td>
+                        <td><span class="badge bg-secondary">${step.entity_type || 'UNKNOWN'}</span></td>
+                        <td><span class="badge bg-info">${step.point_type || 'point'}</span></td>
+                    </tr>`;
+                });
+                html += '</tbody></table>';
+                detailsDiv.innerHTML = html;
+            } else if (detailsDiv) {
+                detailsDiv.innerHTML = '<p class="text-muted">No path details available</p>';
+            }
+        }
+        
+        // Nesting Calculation
+        async function calculateNesting() {
+            const btn = document.getElementById('calculateNestingBtn');
+            const resultsDiv = document.getElementById('nestingResults');
+            
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Calculating...';
+            
+            try {
+                const response = await fetch(`/api/nesting-calculate/${resultId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayNestingResults(data.data);
+                    resultsDiv.style.display = 'block';
+                } else {
+                    alert('Error calculating nesting: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Nesting calculation error:', error);
+                alert('Error calculating nesting. Please try again.');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-calculator me-2"></i>Calculate Optimal Nesting';
+            }
+        }
+        
+        function displayNestingResults(result) {
+            const resultsDiv = document.getElementById('nestingResults');
+            const best = result.best_arrangement;
+            
+            let html = `
+                <div class="card mb-3 border-success">
+                    <div class="card-header bg-success text-white">
+                        <h6 class="mb-0"><i class="fas fa-trophy me-2"></i>Best Arrangement: ${best.sheet_name}</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-3">
+                                <div class="text-center p-3 bg-light rounded">
+                                    <div class="text-muted small mb-1">Parts Per Sheet</div>
+                                    <div class="h3 fw-bold text-primary">${best.total_parts}</div>
+                                    <small class="text-muted">${best.parts_x} × ${best.parts_y} grid</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center p-3 bg-light rounded">
+                                    <div class="text-muted small mb-1">Material Utilization</div>
+                                    <div class="h3 fw-bold text-success">${best.utilization}%</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center p-3 bg-light rounded">
+                                    <div class="text-muted small mb-1">Waste</div>
+                                    <div class="h3 fw-bold text-warning">${best.waste_percent}%</div>
+                                    <small class="text-muted">${best.waste_area.toFixed(0)} mm²</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center p-3 bg-light rounded">
+                                    <div class="text-muted small mb-1">Cost Per Part</div>
+                                    <div class="h3 fw-bold text-info">₹${best.cost_per_part.toFixed(4)}</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <h6 class="mb-2">
+                            <i class="fas fa-th-large me-2"></i>Layout Visualization:
+                            <small class="text-muted ms-2">Visual representation of parts arranged on material sheet</small>
+                        </h6>
+                        <div class="mb-3" style="position: relative; background: #ffffff; border: 2px solid #e5e7eb; border-radius: 8px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                            <canvas id="nestingCanvas" style="width: 100%; height: 400px; display: block;"></canvas>
+                            <div class="mt-2 text-center">
+                                <small class="text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Each colored rectangle represents a part. Numbers indicate part sequence.
+                                </small>
+                            </div>
+                        </div>
+                        
+                        <h6 class="mb-2">Recommendations:</h6>
+                        <ul class="mb-0">
+                            ${result.recommendations.map(rec => `<li>${rec}</li>`).join('')}
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">All Sheet Options</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Sheet Size</th>
+                                        <th>Parts</th>
+                                        <th>Utilization</th>
+                                        <th>Waste %</th>
+                                        <th>Cost/Part</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${result.all_arrangements.map(arr => `
+                                        <tr ${arr.sheet_name === best.sheet_name ? 'class="table-success"' : ''}>
+                                            <td><strong>${arr.sheet_name}</strong></td>
+                                            <td>${arr.total_parts}</td>
+                                            <td>${arr.utilization}%</td>
+                                            <td>${arr.waste_percent}%</td>
+                                            <td>₹${arr.cost_per_part.toFixed(4)}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            resultsDiv.innerHTML = html;
+            
+            // Draw nesting layout after a short delay to ensure canvas is in DOM
+            setTimeout(() => {
+                if (best.layout && best.sheet_width && best.sheet_height) {
+                    drawNestingLayout(best.layout, best.sheet_width, best.sheet_height);
+                } else {
+                    console.warn('Missing layout data:', { layout: best.layout, width: best.sheet_width, height: best.sheet_height });
+                    const canvas = document.getElementById('nestingCanvas');
+                    if (canvas) {
+                        const ctx = canvas.getContext('2d');
+                        ctx.fillStyle = '#f3f4f6';
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+                        ctx.fillStyle = '#6b7280';
+                        ctx.font = '14px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.fillText('Layout data not available', canvas.width / 2, canvas.height / 2);
+                    }
+                }
+            }, 200);
+        }
+        
+        function drawNestingLayout(layout, sheetWidth, sheetHeight) {
+            const canvas = document.getElementById('nestingCanvas');
+            if (!canvas) {
+                console.error('Nesting canvas not found');
+                return;
+            }
+            
+            try {
+                const ctx = canvas.getContext('2d');
+                if (!ctx) {
+                    console.error('Could not get canvas context');
+                    return;
+                }
+                
+                const padding = 30;
+                const labelHeight = 40;
+                const canvasWidth = canvas.offsetWidth - padding * 2;
+                const canvasHeight = 400 - padding * 2 - labelHeight;
+                
+                if (sheetWidth <= 0 || sheetHeight <= 0) {
+                    console.error('Invalid sheet dimensions:', sheetWidth, sheetHeight);
+                    return;
+                }
+                
+                const scaleX = canvasWidth / sheetWidth;
+                const scaleY = canvasHeight / sheetHeight;
+                const scale = Math.min(scaleX, scaleY);
+                
+                // Set canvas size
+                canvas.width = canvas.offsetWidth;
+                canvas.height = 400;
+                
+                // Clear with light background
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw title
+                ctx.fillStyle = '#1f2937';
+                ctx.font = 'bold 14px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('Nesting Layout Visualization', canvas.width / 2, 20);
+                
+                // Draw sheet outline with shadow effect
+                const sheetX = padding;
+                const sheetY = padding + labelHeight;
+                const scaledWidth = sheetWidth * scale;
+                const scaledHeight = sheetHeight * scale;
+                
+                // Shadow
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+                ctx.fillRect(sheetX + 3, sheetY + 3, scaledWidth, scaledHeight);
+                
+                // Sheet background
+                ctx.fillStyle = '#f8fafc';
+                ctx.fillRect(sheetX, sheetY, scaledWidth, scaledHeight);
+                
+                // Sheet border
+                ctx.strokeStyle = '#1f2937';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(sheetX, sheetY, scaledWidth, scaledHeight);
+                
+                // Draw grid lines for better visualization
+                ctx.strokeStyle = '#e5e7eb';
+                ctx.lineWidth = 0.5;
+                const gridSpacing = 50 * scale;
+                for (let x = sheetX; x <= sheetX + scaledWidth; x += gridSpacing) {
+                    ctx.beginPath();
+                    ctx.moveTo(x, sheetY);
+                    ctx.lineTo(x, sheetY + scaledHeight);
+                    ctx.stroke();
+                }
+                for (let y = sheetY; y <= sheetY + scaledHeight; y += gridSpacing) {
+                    ctx.beginPath();
+                    ctx.moveTo(sheetX, y);
+                    ctx.lineTo(sheetX + scaledWidth, y);
+                    ctx.stroke();
+                }
+                
+                // Draw parts with better visualization
+                if (layout && layout.length > 0) {
+                    const colors = [
+                        'rgba(79, 70, 229, 0.4)',   // Indigo
+                        'rgba(6, 182, 212, 0.4)',    // Cyan
+                        'rgba(16, 185, 129, 0.4)',  // Green
+                        'rgba(245, 158, 11, 0.4)',  // Amber
+                        'rgba(239, 68, 68, 0.4)',   // Red
+                    ];
+                    
+                    layout.forEach((part, idx) => {
+                        const x = sheetX + (part.x || 0) * scale;
+                        const y = sheetY + (part.y || 0) * scale;
+                        const w = (part.width || 0) * scale;
+                        const h = (part.height || 0) * scale;
+                        
+                        if (w > 0 && h > 0) {
+                            // Part fill
+                            ctx.fillStyle = colors[idx % colors.length];
+                            ctx.fillRect(x, y, w, h);
+                            
+                            // Part border
+                            ctx.strokeStyle = '#4f46e5';
+                            ctx.lineWidth = 2;
+                            ctx.strokeRect(x, y, w, h);
+                            
+                            // Part number with background
+                            if (part.part_number) {
+                                const partNum = String(part.part_number);
+                                ctx.font = 'bold 12px Arial';
+                                ctx.textAlign = 'center';
+                                ctx.textBaseline = 'middle';
+                                
+                                // Background for text
+                                const textWidth = ctx.measureText(partNum).width;
+                                const textX = x + w / 2;
+                                const textY = y + h / 2;
+                                
+                                ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                                ctx.fillRect(textX - textWidth / 2 - 4, textY - 10, textWidth + 8, 20);
+                                
+                                // Part number text
+                                ctx.fillStyle = '#1f2937';
+                                ctx.fillText(partNum, textX, textY);
+                                
+                                // Dimensions label (small)
+                                if (w > 40 && h > 40) {
+                                    ctx.font = '8px Arial';
+                                    ctx.fillStyle = '#6b7280';
+                                    const dimText = `${Math.round(part.width)}×${Math.round(part.height)}mm`;
+                                    ctx.fillText(dimText, textX, textY + 12);
+                                }
+                            }
+                        }
+                    });
+                    
+                    // Draw legend
+                    const legendY = sheetY + scaledHeight + 15;
+                    ctx.font = '10px Arial';
+                    ctx.textAlign = 'left';
+                    ctx.fillStyle = '#1f2937';
+                    ctx.fillText('Legend:', padding, legendY);
+                    
+                    const legendItems = [
+                        { color: colors[0], label: 'Parts (Alternating Colors)' },
+                        { color: '#1f2937', label: 'Sheet Border' },
+                        { color: '#e5e7eb', label: 'Grid (50mm spacing)' }
+                    ];
+                    
+                    let legendX = padding + 60;
+                    legendItems.forEach((item, idx) => {
+                        ctx.fillStyle = item.color;
+                        ctx.fillRect(legendX, legendY - 8, 15, 15);
+                        ctx.strokeStyle = '#1f2937';
+                        ctx.lineWidth = 1;
+                        ctx.strokeRect(legendX, legendY - 8, 15, 15);
+                        
+                        ctx.fillStyle = '#6b7280';
+                        ctx.fillText(item.label, legendX + 20, legendY + 2);
+                        legendX += 180;
+                    });
+                    
+                    // Draw dimensions
+                    ctx.fillStyle = '#6b7280';
+                    ctx.font = '9px Arial';
+                    ctx.textAlign = 'right';
+                    ctx.fillText(`Sheet: ${sheetWidth} × ${sheetHeight} mm`, sheetX + scaledWidth, legendY);
+                } else {
+                    // No layout data
+                    ctx.fillStyle = '#999';
+                    ctx.font = '14px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('No layout data available', canvas.width / 2, canvas.height / 2);
+                }
+            } catch (error) {
+                console.error('Error drawing nesting layout:', error);
+            }
+        }
+        
+        function togglePathView() {
+            showOptimized = !showOptimized;
+            if (pathVisualizer) {
+                pathVisualizer.draw();
+            }
+        }
+    </script>
+</body>
+</html>
+

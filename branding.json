@@ -1,0 +1,17 @@
+{
+  "brandName": "Tech support",
+  "logoPath": "/static/img/tech_support_logo.png",
+  "colors": {
+    "primary": "#0E4ECF",
+    "secondary": "#06B6D4",
+    "accent": "#F43F5E",
+    "success": "#16A34A",
+    "surface": "#ffffff",
+    "surface2": "#f6f7fb",
+    "textStrong": "#0f172a",
+    "textMuted": "#64748b",
+    "border": "#e2e8f0"
+  }
+}
+
+

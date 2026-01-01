@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CAD Analysis Report · Tech support</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.css" rel="stylesheet">
+    <link href="/static/css/styles.css" rel="stylesheet">
+    <link href="/branding.css" rel="stylesheet">
+    <style>
+        .stat-card {
+            background: linear-gradient(135deg, var(--surface) 0%, var(--surface-2) 100%);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(180deg, var(--brand-primary), var(--brand-secondary));
+        }
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+        }
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--brand-primary), var(--brand-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin: 12px 0;
+        }
+        .stat-label {
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+        .metric-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 16px;
+            border-radius: 20px;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-strong);
+        }
+        .metric-badge i {
+            margin-right: 8px;
+            color: var(--brand-secondary);
+        }
+        .complexity-indicator {
+            width: 100%;
+            height: 8px;
+            background: var(--surface-2);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 12px;
+        }
+        .complexity-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--success), var(--warning), var(--brand-accent));
+            border-radius: 4px;
+            transition: width 1s ease;
+        }
+        .entity-type-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        .entity-type-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.08);
+            border-color: var(--brand-primary);
+        }
+        .entity-icon {
+            font-size: 2.5rem;
+            margin-bottom: 12px;
+            color: var(--brand-secondary);
+        }
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid var(--border);
+        }
+        .section-header i {
+            font-size: 1.5rem;
+            margin-right: 12px;
+            color: var(--brand-primary);
+        }
+        .data-table {
+            background: var(--surface);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .data-table table {
+            margin: 0;
+        }
+        .data-table thead {
+            background: linear-gradient(135deg, var(--brand-primary), var(--brand-secondary));
+            color: white;
+        }
+        .data-table tbody tr {
+            transition: background 0.2s ease;
+        }
+        .data-table tbody tr:hover {
+            background: var(--surface-2);
+        }
+        .chart-container {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            padding: 16px;
+            background: var(--surface-2);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+        .info-item-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+        .info-item-value {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--text-strong);
+        }
+        .layer-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            font-size: 0.875rem;
+            margin: 4px;
+        }
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .fade-in-up {
+            animation: fadeInUp 0.6s ease-out;
+        }
+    </style>
+</head>
+<body class="bg-app">
+    <nav class="navbar navbar-expand-lg navbar-glass sticky-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold d-flex align-items-center" href="/">
+                <img src="/static/img/tech_support_logo.jpg" alt="Tech support" height="55" class="me-2" onerror="this.style.display='none'">
+                Tech support
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navContent">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navContent">
+                <ul class="navbar-nav ms-auto align-items-lg-center">
+                    <li class="nav-item me-lg-3"><a class="nav-link" href="/">Home</a></li>
+                    <li class="nav-item me-lg-3"><a class="nav-link" href="/cnc-cutting">CNC Cutting</a></li>
+                    <li class="nav-item me-lg-3"><a class="nav-link" href="/pricing">Pricing</a></li>
+                    <li class="nav-item me-lg-3"><a class="nav-link" href="/faq">FAQ</a></li>
+                    <li class="nav-item me-lg-3"><a class="nav-link" href="/about">About</a></li>
+                    <li class="nav-item me-lg-3"><a class="nav-link" href="/contact">Contact</a></li>
+                    <li class="nav-item">
+                        <button id="themeToggle" class="btn btn-sm btn-outline-secondary">
+                            <i class="fa-solid fa-moon"></i>
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main class="py-5">
+        <div class="container">
+            <!-- Header Section -->
+            <div class="row mb-5 fade-in-up">
+                <div class="col-12">
+                    <div class="d-flex align-items-center justify-content-between mb-4">
+                        <div>
+                            <h1 class="display-5 fw-bold mb-2">
+                                <i class="fas fa-chart-line text-primary me-3"></i>CAD Analysis Report
+                            </h1>
+                            <p class="text-muted lead mb-0">Comprehensive geometry analysis and quotation details</p>
+                        </div>
+                        <a href="/ai-recommendations/{{ result_id }}" class="btn btn-success btn-lg">
+                            <i class="fas fa-robot me-2"></i>View AI Recommendations
+                        </a>
+                        <a href="/generate-pdf/{{ result_id }}" class="btn btn-primary btn-lg">
+                            <i class="fas fa-file-pdf me-2"></i>Generate PDF Quotation
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Key Metrics Dashboard -->
+            <div class="row g-4 mb-5 fade-in-up">
+                <div class="col-md-3 col-sm-6">
+                    <div class="stat-card">
+                        <div class="stat-label">
+                            <i class="fas fa-ruler-combined me-2"></i>Total Cutting Length
+                        </div>
+                        <div class="stat-value">{{ "%.2f"|format(geometry.total_length) }}</div>
+                        <div class="text-muted small">millimeters</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <div class="stat-card">
+                        <div class="stat-label">
+                            <i class="fas fa-clock me-2"></i>Machining Time
+                        </div>
+                        <div class="stat-value">{{ "%.1f"|format(machining_time) }}</div>
+                        <div class="text-muted small">minutes</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <div class="stat-card">
+                        <div class="stat-label">
+                            <i class="fas fa-rupee-sign me-2"></i>Total Cost
+                        </div>
+                        <div class="stat-value">₹{{ "%.2f"|format(total_cost) }}</div>
+                        <div class="text-muted small">INR</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <div class="stat-card">
+                        <div class="stat-label">
+                            <i class="fas fa-layer-group me-2"></i>Material
+                        </div>
+                        <div class="stat-value" style="font-size: 1.75rem;">{{ material|capitalize }}</div>
+                        <div class="text-muted small">{{ thickness }} mm thickness</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Complexity & File Info -->
+            <div class="row g-4 mb-5 fade-in-up">
+                <div class="col-lg-8">
+                    <div class="card-elevated p-4">
+                        <div class="section-header">
+                            <i class="fas fa-brain"></i>
+                            <h4 class="mb-0">Complexity Analysis</h4>
+                        </div>
+                        {% if geometry.complexity_metrics %}
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <div class="info-item-label">Complexity Score</div>
+                                <div class="info-item-value">{{ geometry.complexity_metrics.complexity_score }}/100</div>
+                                <div class="complexity-indicator">
+                                    <div class="complexity-fill" style="width: {{ geometry.complexity_metrics.complexity_score }}%"></div>
+                                </div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-item-label">Total Entities</div>
+                                <div class="info-item-value">{{ geometry.complexity_metrics.total_entities }}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-item-label">Entity Density</div>
+                                <div class="info-item-value">{{ "%.4f"|format(geometry.complexity_metrics.entity_density) }}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-item-label">Layers</div>
+                                <div class="info-item-value">{{ geometry.complexity_metrics.layer_count }}</div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="card-elevated p-4">
+                        <div class="section-header">
+                            <i class="fas fa-info-circle"></i>
+                            <h5 class="mb-0">File Information</h5>
+                        </div>
+                        {% if geometry.file_info %}
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <div class="info-item-label">DXF Version</div>
+                                <div class="info-item-value">{{ geometry.file_info.dxf_version }}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-item-label">Units</div>
+                                <div class="info-item-value">{{ geometry.file_info.units|upper }}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-item-label">Total Layers</div>
+                                <div class="info-item-value">{{ geometry.file_info.total_layers }}</div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Recommendations -->
+            {% if ai_recommendations %}
+            <div class="row g-4 mb-5 fade-in-up">
+                <div class="col-12">
+                    <div class="card-elevated p-4" style="background: linear-gradient(135deg, rgba(79,70,229,0.05) 0%, rgba(6,182,212,0.05) 100%); border: 2px solid var(--brand-primary);">
+                        <div class="section-header">
+                            <i class="fas fa-robot text-primary"></i>
+                            <h4 class="mb-0">AI Optimization Recommendations</h4>
+                            <span class="badge bg-success ms-auto">
+                                <i class="fas fa-magic me-1"></i>Powered by AI
+                            </span>
+                        </div>
+
+                        <!-- Material Recommendations -->
+                        {% if ai_recommendations.material_recommendations %}
+                        <div class="mb-4">
+                            <h5 class="mb-3">
+                                <i class="fas fa-layer-group text-primary me-2"></i>Material Recommendations
+                            </h5>
+                            <div class="row g-3">
+                                {% for rec in ai_recommendations.material_recommendations[:3] %}
+                                <div class="col-lg-4 col-md-6">
+                                    <div class="card h-100" style="border-left: 4px solid var(--brand-secondary);">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                                <h6 class="card-title mb-0">{{ rec.material }}</h6>
+                                                {% if rec.savings > 0 %}
+                                                <span class="badge bg-success">Save ₹{{ "%.2f"|format(rec.savings) }}</span>
+                                                {% endif %}
+                                            </div>
+                                            <p class="text-muted small mb-2">{{ rec.reason }}</p>
+                                            <div class="mb-2">
+                                                <strong>Cost:</strong> ₹{{ "%.2f"|format(rec.cost) }}
+                                                {% if rec.time_change %}
+                                                <br><small class="text-muted">Time: {{ "%.1f"|format(rec.time_change) }}% {{ "faster" if rec.time_change < 0 else "slower" }}</small>
+                                                {% endif %}
+                                            </div>
+                                            {% if rec.pros %}
+                                            <div class="mb-2">
+                                                <strong class="text-success small">Pros:</strong>
+                                                <ul class="small mb-0 ps-3">
+                                                    {% for pro in rec.pros[:2] %}
+                                                    <li>{{ pro }}</li>
+                                                    {% endfor %}
+                                                </ul>
+                                            </div>
+                                            {% endif %}
+                                            {% if rec.cons %}
+                                            <div class="mb-2">
+                                                <strong class="text-warning small">Cons:</strong>
+                                                <ul class="small mb-0 ps-3">
+                                                    {% for con in rec.cons[:2] %}
+                                                    <li>{{ con }}</li>
+                                                    {% endfor %}
+                                                </ul>
+                                            </div>
+                                            {% endif %}
+                                            {% if rec.best_for %}
+                                            <div class="mt-2">
+                                                <small class="text-muted">
+                                                    <i class="fas fa-info-circle me-1"></i>Best for: {{ rec.best_for }}
+                                                </small>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Design Suggestions -->
+                        {% if ai_recommendations.design_suggestions %}
+                        <div class="mb-4">
+                            <h5 class="mb-3">
+                                <i class="fas fa-lightbulb text-warning me-2"></i>Design Optimization Suggestions
+                            </h5>
+                            <div class="row g-3">
+                                {% for suggestion in ai_recommendations.design_suggestions %}
+                                <div class="col-md-6">
+                                    <div class="card h-100" style="border-left: 4px solid var(--warning);">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                                <h6 class="card-title mb-0">
+                                                    {% if suggestion.priority == 'high' %}
+                                                    <span class="badge bg-danger me-2">High Priority</span>
+                                                    {% elif suggestion.priority == 'medium' %}
+                                                    <span class="badge bg-warning me-2">Medium</span>
+                                                    {% else %}
+                                                    <span class="badge bg-info me-2">Low</span>
+                                                    {% endif %}
+                                                    {{ suggestion.suggestion }}
+                                                </h6>
+                                            </div>
+                                            <p class="text-muted small mb-2">
+                                                <strong>Impact:</strong> {{ suggestion.impact }}
+                                            </p>
+                                            <p class="small mb-0">
+                                                <i class="fas fa-quote-left me-1 text-muted"></i>
+                                                {{ suggestion.reason }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Cost Analysis -->
+                        {% if ai_recommendations.cost_analysis %}
+                        <div class="mb-4">
+                            <h5 class="mb-3">
+                                <i class="fas fa-chart-pie text-success me-2"></i>Cost Analysis
+                            </h5>
+            <div class="row g-3">
+                                {% if ai_recommendations.cost_analysis.main_drivers %}
+                                <div class="col-md-6">
+                                    <div class="card h-100">
+                                        <div class="card-body">
+                                            <h6 class="card-title">
+                                                <i class="fas fa-exclamation-triangle text-warning me-2"></i>Main Cost Drivers
+                                            </h6>
+                                            <ul class="mb-0">
+                                                {% for driver in ai_recommendations.cost_analysis.main_drivers %}
+                                                <li>{{ driver }}</li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                                {% if ai_recommendations.cost_analysis.quick_wins %}
+                <div class="col-md-6">
+                                    <div class="card h-100" style="border-left: 4px solid var(--success);">
+                                        <div class="card-body">
+                                            <h6 class="card-title">
+                                                <i class="fas fa-bolt text-success me-2"></i>Quick Wins
+                                            </h6>
+                                            <ul class="mb-0">
+                                                {% for win in ai_recommendations.cost_analysis.quick_wins %}
+                                                <li>{{ win }}</li>
+                                                {% endfor %}
+                                            </ul>
+                                            {% if ai_recommendations.cost_analysis.potential_savings %}
+                                            <div class="mt-3 p-2 bg-light rounded">
+                                                <strong>Potential Savings:</strong> 
+                                                <span class="text-success">{{ ai_recommendations.cost_analysis.potential_savings }}</span>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Raw AI Response (if available, for debugging) -->
+                        {% if ai_recommendations.raw_response and false %}
+                        <div class="mt-4">
+                            <details>
+                                <summary class="text-muted small">View AI Analysis</summary>
+                                <pre class="mt-2 p-3 bg-light rounded small" style="max-height: 300px; overflow-y: auto;">{{ ai_recommendations.raw_response }}</pre>
+                            </details>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Bounding Box & Dimensions -->
+            {% if geometry.bounding_box and geometry.bounding_box.width > 0 %}
+            <div class="row g-4 mb-5 fade-in-up">
+                <div class="col-12">
+                    <div class="card-elevated p-4">
+                        <div class="section-header">
+                            <i class="fas fa-vector-square"></i>
+                            <h4 class="mb-0">Drawing Dimensions</h4>
+                        </div>
+                        <div class="row g-4">
+                            <div class="col-md-3 col-sm-6">
+                                <div class="text-center p-3 bg-light rounded">
+                                    <div class="text-muted small mb-2">Width</div>
+                                    <div class="h4 fw-bold text-primary">{{ "%.2f"|format(geometry.bounding_box.width) }} mm</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-sm-6">
+                                <div class="text-center p-3 bg-light rounded">
+                                    <div class="text-muted small mb-2">Height</div>
+                                    <div class="h4 fw-bold text-primary">{{ "%.2f"|format(geometry.bounding_box.height) }} mm</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-sm-6">
+                                <div class="text-center p-3 bg-light rounded">
+                                    <div class="text-muted small mb-2">Bounding Area</div>
+                                    <div class="h4 fw-bold text-primary">{{ "%.2f"|format(geometry.bounding_box.area) }} mm²</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-sm-6">
+                                <div class="text-center p-3 bg-light rounded">
+                                    <div class="text-muted small mb-2">Origin</div>
+                                    <div class="h6 fw-bold text-muted">({{ "%.2f"|format(geometry.bounding_box.min_x) }}, {{ "%.2f"|format(geometry.bounding_box.min_y) }})</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Entity Type Distribution -->
+            <div class="row g-4 mb-5 fade-in-up">
+                <div class="col-12">
+                    <div class="section-header">
+                        <i class="fas fa-shapes"></i>
+                        <h4 class="mb-0">Entity Type Distribution</h4>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-lg-2 col-md-4 col-sm-6">
+                            <div class="entity-type-card">
+                                <div class="entity-icon"><i class="fas fa-minus"></i></div>
+                                <div class="h3 fw-bold mb-1">{{ geometry.line_count }}</div>
+                                <div class="text-muted small">Lines</div>
+                            </div>
+                        </div>
+                        <div class="col-lg-2 col-md-4 col-sm-6">
+                            <div class="entity-type-card">
+                                <div class="entity-icon"><i class="fas fa-circle-notch"></i></div>
+                                <div class="h3 fw-bold mb-1">{{ geometry.arc_count }}</div>
+                                <div class="text-muted small">Arcs</div>
+                            </div>
+                        </div>
+                        <div class="col-lg-2 col-md-4 col-sm-6">
+                            <div class="entity-type-card">
+                                <div class="entity-icon"><i class="fas fa-circle"></i></div>
+                                <div class="h3 fw-bold mb-1">{{ geometry.circle_count }}</div>
+                                <div class="text-muted small">Circles</div>
+                            </div>
+                        </div>
+                        <div class="col-lg-2 col-md-4 col-sm-6">
+                            <div class="entity-type-card">
+                                <div class="entity-icon"><i class="fas fa-project-diagram"></i></div>
+                                <div class="h3 fw-bold mb-1">{{ geometry.polyline_count }}</div>
+                                <div class="text-muted small">Polylines</div>
+                            </div>
+                        </div>
+                        <div class="col-lg-2 col-md-4 col-sm-6">
+                            <div class="entity-type-card">
+                                <div class="entity-icon"><i class="fas fa-wave-square"></i></div>
+                                <div class="h3 fw-bold mb-1">{{ geometry.spline_count }}</div>
+                                <div class="text-muted small">Splines</div>
+                            </div>
+                        </div>
+                        <div class="col-lg-2 col-md-4 col-sm-6">
+                            <div class="entity-type-card">
+                                <div class="entity-icon"><i class="fas fa-ellipse"></i></div>
+                                <div class="h3 fw-bold mb-1">{{ geometry.ellipse_count }}</div>
+                                <div class="text-muted small">Ellipses</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="row g-4 mb-5 fade-in-up">
+                <div class="col-lg-6">
+                    <div class="chart-container">
+                        <h5 class="mb-4"><i class="fas fa-chart-pie me-2 text-primary"></i>Entity Distribution</h5>
+                        <canvas id="entityChart"></canvas>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="chart-container">
+                        <h5 class="mb-4"><i class="fas fa-chart-bar me-2 text-primary"></i>Layer Statistics</h5>
+                        <canvas id="layerChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Layer Distribution -->
+            <div class="row g-4 mb-5 fade-in-up">
+                <div class="col-12">
+                    <div class="card-elevated p-4">
+                        <div class="section-header">
+                            <i class="fas fa-layer-group"></i>
+                            <h4 class="mb-0">Layer Analysis</h4>
+                        </div>
+                        <div class="data-table">
+                            <table class="table table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Layer Name</th>
+                                        <th class="text-end">Entity Count</th>
+                                        <th class="text-end">Total Length (mm)</th>
+                                        <th class="text-end">Percentage</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for name, stats in geometry.layer_stats.items() %}
+                                    <tr>
+                                        <td><span class="layer-badge">{{ name }}</span></td>
+                                        <td class="text-end fw-bold">
+                                            {% if stats is mapping %}
+                                                {{ stats.count if stats.count is defined else 0 }}
+                                            {% else %}
+                                                {{ stats }}
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-end">
+                                            {% if stats is mapping and stats.length is defined %}
+                                                {{ "%.2f"|format(stats.length) }}
+                                            {% else %}
+                                                N/A
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-end">
+                                            {% if stats is mapping and stats.length is defined and geometry.total_length > 0 %}
+                                                {{ "%.1f"|format((stats.length / geometry.total_length) * 100) }}%
+                                            {% else %}
+                                                N/A
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                            {% else %}
+                                    <tr>
+                                        <td colspan="4" class="text-center text-muted py-4">No layer information available</td>
+                                    </tr>
+                            {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Entity Details Table -->
+            <div class="row g-4 mb-5 fade-in-up">
+                <div class="col-12">
+                    <div class="card-elevated p-4">
+                        <div class="section-header">
+                            <i class="fas fa-list"></i>
+                            <h4 class="mb-0">Entity Details</h4>
+                            <span class="badge bg-primary ms-auto">{{ geometry.entities|length }} entities</span>
+                        </div>
+                        <div class="data-table" style="max-height: 500px; overflow-y: auto;">
+                            <table class="table table-hover mb-0">
+                                <thead class="sticky-top">
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Type</th>
+                                        <th>Layer</th>
+                                        <th class="text-end">Length (mm)</th>
+                                        <th>Details</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for e in geometry.entities[:500] %}
+                                    <tr>
+                                        <td class="text-muted">{{ loop.index }}</td>
+                                        <td><span class="badge bg-secondary">{{ e.type }}</span></td>
+                                        <td><span class="layer-badge">{{ e.layer if e.layer is defined else 'Default' }}</span></td>
+                                        <td class="text-end fw-bold">{{ "%.2f"|format(e.length) if e.length is defined else "N/A" }}</td>
+                                        <td class="small text-muted">
+                                            {% if e.type == 'LINE' %}
+                                            Start: ({{ e.start[0] }}, {{ e.start[1] }})
+                                            {% elif e.type == 'CIRCLE' %}
+                                            R: {{ e.radius }}mm, Center: ({{ e.center[0] }}, {{ e.center[1] }})
+                                            {% elif e.type == 'ARC' %}
+                                            R: {{ e.radius }}mm
+                                            {% elif e.type in ['LWPOLYLINE', 'POLYLINE'] %}
+                                            {{ e.point_count }} points{% if e.is_closed %} (closed){% endif %}
+                                            {% else %}
+                                            {{ e.text[:30] if e.text is defined else 'N/A' }}
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                            {% else %}
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted py-4">No entities found</td>
+                                    </tr>
+                            {% endfor %}
+                                </tbody>
+                            </table>
+                            {% if geometry.entities|length > 500 %}
+                            <div class="p-3 text-center text-muted bg-light">
+                                <small>Showing first 500 of {{ geometry.entities|length }} entities</small>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="row mb-5 fade-in-up">
+                <div class="col-12 text-center">
+                    <div class="card-elevated p-4">
+                        <h5 class="mb-4">Ready to Generate Your Quotation?</h5>
+                        <div class="d-flex gap-3 justify-content-center flex-wrap">
+                            <a href="/ai-recommendations/{{ result_id }}" class="btn btn-success btn-lg">
+                                <i class="fas fa-robot me-2"></i>AI Optimization Recommendations
+                            </a>
+                            <a href="/generate-pdf/{{ result_id }}" class="btn btn-primary btn-lg">
+                                <i class="fas fa-file-pdf me-2"></i>Generate & Download PDF
+                            </a>
+                            <a href="/" class="btn btn-outline-primary btn-lg">
+                                <i class="fas fa-upload me-2"></i>Upload Another File
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer py-4">
+        <div class="container d-flex flex-column flex-lg-row justify-content-between align-items-center gap-2">
+            <div class="text-muted small">© <span id="yearNow"></span> Tech support</div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="/static/js/app.js"></script>
+    <script>
+        document.getElementById('yearNow').textContent = new Date().getFullYear();
+
+        // Entity Distribution Chart
+        const entityCtx = document.getElementById('entityChart');
+        if (entityCtx) {
+            new Chart(entityCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Lines', 'Arcs', 'Circles', 'Polylines', 'Splines', 'Ellipses'],
+                    datasets: [{
+                        data: [
+                            {{ geometry.line_count }},
+                            {{ geometry.arc_count }},
+                            {{ geometry.circle_count }},
+                            {{ geometry.polyline_count }},
+                            {{ geometry.spline_count }},
+                            {{ geometry.ellipse_count }}
+                        ],
+                        backgroundColor: [
+                            'rgba(79, 70, 229, 0.8)',
+                            'rgba(6, 182, 212, 0.8)',
+                            'rgba(244, 63, 94, 0.8)',
+                            'rgba(22, 163, 74, 0.8)',
+                            'rgba(245, 158, 11, 0.8)',
+                            'rgba(139, 92, 246, 0.8)'
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Layer Statistics Chart
+        const layerCtx = document.getElementById('layerChart');
+        if (layerCtx && {{ geometry.layer_stats|length }} > 0) {
+            const layerNames = [{% for name in geometry.layer_stats.keys() %}'{{ name }}'{% if not loop.last %},{% endif %}{% endfor %}];
+            const layerCounts = [{% for stats in geometry.layer_stats.values() %}{% if stats is mapping %}{{ stats.count if stats.count is defined else 0 }}{% else %}{{ stats }}{% endif %}{% if not loop.last %},{% endif %}{% endfor %}];
+            
+            new Chart(layerCtx, {
+                type: 'bar',
+                data: {
+                    labels: layerNames,
+                    datasets: [{
+                        label: 'Entity Count',
+                        data: layerCounts,
+                        backgroundColor: 'rgba(79, 70, 229, 0.8)',
+                        borderColor: 'rgba(79, 70, 229, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>

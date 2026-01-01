@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CNC Quotation Generator · Tech support</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+    <link href="/static/css/styles.css" rel="stylesheet">
+    <link href="/branding.css" rel="stylesheet">
+</head>
+<body class="bg-app">
+    <!-- Top Nav -->
+    <nav class="navbar navbar-expand-lg navbar-glass sticky-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold d-flex align-items-center" href="/">
+                <img src="/static/img/tech_support_logo.jpg" alt="Tech support" height="55" class="me-2" onerror="this.style.display='none'">
+                Tech support
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navContent">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navContent">
+                <ul class="navbar-nav ms-auto align-items-lg-center">
+                    <li class="nav-item me-lg-3"><a class="nav-link" href="#features">Features</a></li>
+                    <li class="nav-item me-lg-3"><a class="nav-link" href="/cnc-cutting">CNC Cutting</a></li>
+                    <li class="nav-item me-lg-3"><a class="nav-link" href="/pricing">Pricing</a></li>
+                    <li class="nav-item me-lg-3"><a class="nav-link" href="/faq">FAQ</a></li>
+                    <li class="nav-item me-lg-3"><a class="nav-link" href="/about">About</a></li>
+                    <li class="nav-item me-lg-3"><a class="nav-link" href="/contact">Contact</a></li>
+                    <li class="nav-item">
+                        <button id="themeToggle" class="btn btn-sm btn-outline-secondary">
+                            <i class="fa-solid fa-moon"></i>
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <header class="hero-section py-5 py-lg-6">
+        <div class="container">
+            <div class="row align-items-center g-4">
+                <div class="col-lg-6">
+                    <h1 class="display-5 fw-bold mb-3">Instant CNC Quotations from your DXF</h1>
+                    <p class="lead text-muted mb-4">Upload your CAD, choose material and thickness, and get a polished quotation PDF in minutes.</p>
+                    <ul class="list-unstyled small text-muted mb-4">
+                        <li class="mb-2"><i class="fa-solid fa-check text-success me-2"></i>Accurate cutting length & machining time</li>
+                        <li class="mb-2"><i class="fa-solid fa-check text-success me-2"></i>AI-assisted cost estimation</li>
+                        <li class="mb-2"><i class="fa-solid fa-check text-success me-2"></i>Branded PDF quotation output</li>
+                    </ul>
+                </div>
+                <div class="col-lg-6">
+                    <div class="card card-elevated">
+                        <div class="card-body p-4 p-lg-5">
+                            <h5 class="mb-4"><i class="fas fa-upload me-2"></i>Upload Your CAD File</h5>
+                            <form id="quotationForm" enctype="multipart/form-data">
+                                <div class="mb-3">
+                                    <div class="file-upload-area" id="fileUploadArea">
+                                        <div class="upload-icon">
+                                            <i class="fas fa-file-upload"></i>
+                                        </div>
+                                        <h6 class="mb-1">Drop your DXF file here or click to browse</h6>
+                                        <p class="text-muted mb-0">Supports DXF format up to 16MB</p>
+                                        <input type="file" id="fileInput" name="file" accept=".dxf" style="display: none;" required>
+                                        <div id="fileInfo" class="mt-2"></div>
+                                    </div>
+                                </div>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label for="material" class="form-label"><i class="fas fa-layer-group me-1"></i>Material</label>
+                                        <select class="form-select" id="material" name="material" required>
+                                            <option value="">Select Material</option>
+                                            <option value="steel" selected>Steel</option>
+                                            <option value="aluminum">Aluminum</option>
+                                            <option value="plastic">Plastic</option>
+                                            <option value="wood">Wood</option>
+                                            <option value="brass">Brass</option>
+                                            <option value="copper">Copper</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="thickness" class="form-label"><i class="fas fa-ruler-vertical me-1"></i>Thickness (mm)</label>
+                                        <input type="number" class="form-control" id="thickness" name="thickness" min="0.1" max="100" step="0.1" value="1.0" required>
+                                    </div>
+                                </div>
+                                <div class="d-grid mt-4">
+                                    <button type="submit" class="btn btn-primary btn-lg" id="generateBtn">
+                                        <i class="fas fa-calculator me-2"></i>Generate Quotation
+                                    </button>
+                                </div>
+                            </form>
+                            <div class="loading d-none" id="loadingSection">
+                                <div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div>
+                                <p class="loader-text text-muted mt-3 mb-0">Continuously processing your CAD file<span class="dot">.</span><span class="dot">.</span><span class="dot">.</span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Results -->
+    <section class="py-5 d-none" id="resultsShell">
+        <div class="container">
+            <div class="results-section" id="resultsSection">
+                <div class="d-flex align-items-center mb-3">
+                    <i class="fas fa-chart-line text-primary me-2"></i>
+                    <h3 class="mb-0">Quotation Results</h3>
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="result-card text-center">
+                            <div class="small text-muted">Cutting Length</div>
+                            <div class="result-value" id="cuttingLength">0 mm</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="result-card text-center">
+                            <div class="small text-muted">Machining Time</div>
+                            <div class="result-value" id="machiningTime">0 min</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="result-card text-center">
+                            <div class="small text-muted">Total Cost</div>
+                            <div class="result-value" id="totalCost">$0.00</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-center mt-4">
+                    <button class="btn btn-success btn-lg" id="downloadBtn">
+                        <i class="fas fa-download me-2"></i>Download PDF Quotation
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Feature grid -->
+    <section id="features" class="py-5">
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-md-3">
+                    <div class="feature-card text-center">
+                        <div class="feature-icon"><i class="fas fa-file-code"></i></div>
+                        <h5>DXF Support</h5>
+                        <p class="text-muted">Upload and parse DXF files with precision.</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="feature-card text-center">
+                        <div class="feature-icon"><i class="fas fa-calculator"></i></div>
+                        <h5>Smart Calculation</h5>
+                        <p class="text-muted">AI-powered cost and time estimation.</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="feature-card text-center">
+                        <div class="feature-icon"><i class="fas fa-file-pdf"></i></div>
+                        <h5>PDF Generation</h5>
+                        <p class="text-muted">Professional quotation documents.</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="feature-card text-center">
+                        <div class="feature-icon"><i class="fas fa-cogs"></i></div>
+                        <h5>Material Database</h5>
+                        <p class="text-muted">Comprehensive material properties.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer py-4">
+        <div class="container d-flex flex-column flex-lg-row justify-content-between align-items-center gap-2">
+            <div class="text-muted small">© <span id="yearNow"></span> Tech support</div>
+            <div class="d-flex gap-3 small">
+                <a href="#" class="link-secondary text-decoration-none">Terms</a>
+                <a href="#" class="link-secondary text-decoration-none">Privacy</a>
+                <a href="/contact" class="link-secondary text-decoration-none">Contact</a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

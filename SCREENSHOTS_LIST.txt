@@ -1,0 +1,36 @@
+Screenshot Filenames - Rename your screenshots to match these exact names:
+
+screenshot-01-homepage.png
+screenshot-02-navigation.png
+screenshot-03-upload-interface.png
+screenshot-04-file-selected.png
+screenshot-05-processing.png
+screenshot-06-results-overview.png
+screenshot-07-complexity.png
+screenshot-08-dimensions.png
+screenshot-09-entity-distribution.png
+screenshot-10-entity-chart.png
+screenshot-11-layer-stats.png
+screenshot-12-entity-table.png
+screenshot-13-ai-loading.png
+screenshot-14-material-recommendations.png
+screenshot-15-path-optimization.png
+screenshot-16-tsp-results.png
+screenshot-17-nesting-section.png
+screenshot-18-nesting-results.png
+screenshot-19-nesting-table.png
+screenshot-20-design-suggestions.png
+screenshot-21-manufacturing-insights.png
+screenshot-22-pdf-page1.png
+screenshot-23-pdf-page2.png
+screenshot-24-pdf-cost-detail.png
+screenshot-25-path-toggle.png
+screenshot-26-nesting-zoomed.png
+screenshot-27-chart-interactive.png
+screenshot-28-upload-error.png
+screenshot-29-validation.png
+screenshot-30-mobile-homepage.png
+screenshot-31-tablet-results.png
+
+Place all screenshots in: screenshots/ folder
+
