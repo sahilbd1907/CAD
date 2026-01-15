@@ -832,6 +832,10 @@
         function displayNestingResults(result) {
             const resultsDiv = document.getElementById('nestingResults');
             const best = result.best_arrangement;
+            const partDims = result.part_dimensions || {};
+            const partWidth = partDims.width || (best.sheet_width / best.parts_x);
+            const partHeight = partDims.height || (best.sheet_height / best.parts_y);
+            const partArea = partDims.area || (partWidth * partHeight);
             
             let html = `
                 <div class="card mb-3 border-success">
@@ -863,22 +867,83 @@
                             <div class="col-md-3">
                                 <div class="text-center p-3 bg-light rounded">
                                     <div class="text-muted small mb-1">Cost Per Part</div>
-                                    <div class="h3 fw-bold text-info">₹${best.cost_per_part.toFixed(4)}</div>
+                                    <div class="h3 fw-bold text-info">Rs. ${best.cost_per_part.toFixed(4)}</div>
                                 </div>
                             </div>
                         </div>
                         
-                        <h6 class="mb-2">
-                            <i class="fas fa-th-large me-2"></i>Layout Visualization:
-                            <small class="text-muted ms-2">Visual representation of parts arranged on material sheet</small>
-                        </h6>
-                        <div class="mb-3" style="position: relative; background: #ffffff; border: 2px solid #e5e7eb; border-radius: 8px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                            <canvas id="nestingCanvas" style="width: 100%; height: 400px; display: block;"></canvas>
-                            <div class="mt-2 text-center">
-                                <small class="text-muted">
-                                    <i class="fas fa-info-circle me-1"></i>
-                                    Each colored rectangle represents a part. Numbers indicate part sequence.
-                                </small>
+                        <div class="card mb-3 border-info">
+                            <div class="card-header bg-info text-white">
+                                <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Nesting Process Explained</h6>
+                            </div>
+                            <div class="card-body">
+                                <h6 class="text-primary mb-3">How Nesting Optimization Works:</h6>
+                                
+                                <div class="mb-4">
+                                    <h6 class="fw-bold text-dark mb-2"><i class="fas fa-calculator me-2"></i>1. Part Dimension Analysis</h6>
+                                    <p class="mb-2">The algorithm first analyzes your part's bounding dimensions:</p>
+                                    <ul class="mb-0">
+                                        <li><strong>Part Width:</strong> ${partWidth.toFixed(2)} mm</li>
+                                        <li><strong>Part Height:</strong> ${partHeight.toFixed(2)} mm</li>
+                                        <li><strong>Part Area:</strong> ${partArea.toFixed(2)} mm²</li>
+                                        <li><strong>Analysis:</strong> The algorithm calculates how many parts can fit on each standard sheet size</li>
+                                    </ul>
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <h6 class="fw-bold text-dark mb-2"><i class="fas fa-th me-2"></i>2. Grid-Based Arrangement</h6>
+                                    <p class="mb-2">For each standard sheet size, the algorithm calculates optimal grid placement:</p>
+                                    <ul class="mb-0">
+                                        <li><strong>Grid Dimensions:</strong> ${best.parts_x} parts × ${best.parts_y} parts = ${best.total_parts} total parts</li>
+                                        <li><strong>Spacing Between Parts:</strong> 5mm standard spacing to prevent edge damage during cutting</li>
+                                        <li><strong>Edge Margin:</strong> Automatic spacing from sheet edges to ensure clean cuts</li>
+                                        <li><strong>Arrangement Pattern:</strong> Regular grid pattern optimized for laser cutting efficiency</li>
+                                    </ul>
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <h6 class="fw-bold text-dark mb-2"><i class="fas fa-chart-pie me-2"></i>3. Material Utilization Calculation</h6>
+                                    <p class="mb-2">The algorithm calculates efficiency metrics for each sheet option:</p>
+                                    <ul class="mb-0">
+                                        <li><strong>Used Area:</strong> ${(best.total_parts * partArea).toFixed(2)} mm² (${best.total_parts} parts × ${partArea.toFixed(2)} mm² per part)</li>
+                                        <li><strong>Sheet Area:</strong> ${best.sheet_width * best.sheet_height} mm² (${best.sheet_name})</li>
+                                        <li><strong>Utilization:</strong> ${best.utilization}% - Percentage of sheet actually used for parts</li>
+                                        <li><strong>Waste Area:</strong> ${best.waste_area.toFixed(0)} mm² (${best.waste_percent}%) - Unused material</li>
+                                    </ul>
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <h6 class="fw-bold text-dark mb-2"><i class="fas fa-dollar-sign me-2"></i>4. Cost Optimization</h6>
+                                    <p class="mb-2">Material costs are calculated based on optimal arrangement:</p>
+                                    <ul class="mb-0">
+                                        <li><strong>Total Sheet Cost:</strong> Rs. ${(best.sheet_width * best.sheet_height * 0.0001).toFixed(2)} (sheet area × material cost per mm²)</li>
+                                        <li><strong>Cost Per Part:</strong> Rs. ${best.cost_per_part.toFixed(4)} (sheet cost ÷ number of parts)</li>
+                                        <li><strong>Material Efficiency:</strong> Higher utilization = lower cost per part</li>
+                                        <li><strong>Cost Savings:</strong> More parts per sheet reduces material waste and overall cost</li>
+                                    </ul>
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <h6 class="fw-bold text-dark mb-2"><i class="fas fa-search me-2"></i>5. Best Arrangement Selection</h6>
+                                    <p class="mb-2">The algorithm evaluates all standard sheet sizes and selects the best option:</p>
+                                    <ul class="mb-0">
+                                        <li><strong>Selection Criteria:</strong> Highest material utilization percentage</li>
+                                        <li><strong>Sheet Comparison:</strong> All standard sizes (1000×2000mm, 1250×2500mm, 1500×3000mm, 2000×4000mm) are evaluated</li>
+                                        <li><strong>Optimal Choice:</strong> ${best.sheet_name} provides ${best.utilization}% utilization with ${best.total_parts} parts</li>
+                                        <li><strong>Positioning:</strong> Parts are arranged in a ${best.parts_x}×${best.parts_y} grid pattern starting from the top-left corner</li>
+                                    </ul>
+                                </div>
+                                
+                                <div class="mb-0">
+                                    <h6 class="fw-bold text-dark mb-2"><i class="fas fa-cog me-2"></i>6. Cutting Path Optimization</h6>
+                                    <p class="mb-2">For laser cutting, the arrangement is optimized for:</p>
+                                    <ul class="mb-0">
+                                        <li><strong>Cutting Sequence:</strong> Parts arranged to minimize cutting head travel distance</li>
+                                        <li><strong>Material Stability:</strong> Grid pattern ensures material remains stable during cutting</li>
+                                        <li><strong>Waste Minimization:</strong> Unused material (${best.waste_percent}%) is minimized while maintaining cutting quality</li>
+                                        <li><strong>Production Efficiency:</strong> ${best.total_parts} parts per sheet maximizes production output per material sheet</li>
+                                    </ul>
+                                </div>
                             </div>
                         </div>
                         
@@ -912,7 +977,7 @@
                                             <td>${arr.total_parts}</td>
                                             <td>${arr.utilization}%</td>
                                             <td>${arr.waste_percent}%</td>
-                                            <td>₹${arr.cost_per_part.toFixed(4)}</td>
+                                            <td>Rs. ${arr.cost_per_part.toFixed(4)}</td>
                                         </tr>
                                     `).join('')}
                                 </tbody>
@@ -923,202 +988,6 @@
             `;
             
             resultsDiv.innerHTML = html;
-            
-            // Draw nesting layout after a short delay to ensure canvas is in DOM
-            setTimeout(() => {
-                if (best.layout && best.sheet_width && best.sheet_height) {
-                    drawNestingLayout(best.layout, best.sheet_width, best.sheet_height);
-                } else {
-                    console.warn('Missing layout data:', { layout: best.layout, width: best.sheet_width, height: best.sheet_height });
-                    const canvas = document.getElementById('nestingCanvas');
-                    if (canvas) {
-                        const ctx = canvas.getContext('2d');
-                        ctx.fillStyle = '#f3f4f6';
-                        ctx.fillRect(0, 0, canvas.width, canvas.height);
-                        ctx.fillStyle = '#6b7280';
-                        ctx.font = '14px Arial';
-                        ctx.textAlign = 'center';
-                        ctx.fillText('Layout data not available', canvas.width / 2, canvas.height / 2);
-                    }
-                }
-            }, 200);
-        }
-        
-        function drawNestingLayout(layout, sheetWidth, sheetHeight) {
-            const canvas = document.getElementById('nestingCanvas');
-            if (!canvas) {
-                console.error('Nesting canvas not found');
-                return;
-            }
-            
-            try {
-                const ctx = canvas.getContext('2d');
-                if (!ctx) {
-                    console.error('Could not get canvas context');
-                    return;
-                }
-                
-                const padding = 30;
-                const labelHeight = 40;
-                const canvasWidth = canvas.offsetWidth - padding * 2;
-                const canvasHeight = 400 - padding * 2 - labelHeight;
-                
-                if (sheetWidth <= 0 || sheetHeight <= 0) {
-                    console.error('Invalid sheet dimensions:', sheetWidth, sheetHeight);
-                    return;
-                }
-                
-                const scaleX = canvasWidth / sheetWidth;
-                const scaleY = canvasHeight / sheetHeight;
-                const scale = Math.min(scaleX, scaleY);
-                
-                // Set canvas size
-                canvas.width = canvas.offsetWidth;
-                canvas.height = 400;
-                
-                // Clear with light background
-                ctx.fillStyle = '#ffffff';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                
-                // Draw title
-                ctx.fillStyle = '#1f2937';
-                ctx.font = 'bold 14px Arial';
-                ctx.textAlign = 'center';
-                ctx.fillText('Nesting Layout Visualization', canvas.width / 2, 20);
-                
-                // Draw sheet outline with shadow effect
-                const sheetX = padding;
-                const sheetY = padding + labelHeight;
-                const scaledWidth = sheetWidth * scale;
-                const scaledHeight = sheetHeight * scale;
-                
-                // Shadow
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
-                ctx.fillRect(sheetX + 3, sheetY + 3, scaledWidth, scaledHeight);
-                
-                // Sheet background
-                ctx.fillStyle = '#f8fafc';
-                ctx.fillRect(sheetX, sheetY, scaledWidth, scaledHeight);
-                
-                // Sheet border
-                ctx.strokeStyle = '#1f2937';
-                ctx.lineWidth = 3;
-                ctx.strokeRect(sheetX, sheetY, scaledWidth, scaledHeight);
-                
-                // Draw grid lines for better visualization
-                ctx.strokeStyle = '#e5e7eb';
-                ctx.lineWidth = 0.5;
-                const gridSpacing = 50 * scale;
-                for (let x = sheetX; x <= sheetX + scaledWidth; x += gridSpacing) {
-                    ctx.beginPath();
-                    ctx.moveTo(x, sheetY);
-                    ctx.lineTo(x, sheetY + scaledHeight);
-                    ctx.stroke();
-                }
-                for (let y = sheetY; y <= sheetY + scaledHeight; y += gridSpacing) {
-                    ctx.beginPath();
-                    ctx.moveTo(sheetX, y);
-                    ctx.lineTo(sheetX + scaledWidth, y);
-                    ctx.stroke();
-                }
-                
-                // Draw parts with better visualization
-                if (layout && layout.length > 0) {
-                    const colors = [
-                        'rgba(79, 70, 229, 0.4)',   // Indigo
-                        'rgba(6, 182, 212, 0.4)',    // Cyan
-                        'rgba(16, 185, 129, 0.4)',  // Green
-                        'rgba(245, 158, 11, 0.4)',  // Amber
-                        'rgba(239, 68, 68, 0.4)',   // Red
-                    ];
-                    
-                    layout.forEach((part, idx) => {
-                        const x = sheetX + (part.x || 0) * scale;
-                        const y = sheetY + (part.y || 0) * scale;
-                        const w = (part.width || 0) * scale;
-                        const h = (part.height || 0) * scale;
-                        
-                        if (w > 0 && h > 0) {
-                            // Part fill
-                            ctx.fillStyle = colors[idx % colors.length];
-                            ctx.fillRect(x, y, w, h);
-                            
-                            // Part border
-                            ctx.strokeStyle = '#4f46e5';
-                            ctx.lineWidth = 2;
-                            ctx.strokeRect(x, y, w, h);
-                            
-                            // Part number with background
-                            if (part.part_number) {
-                                const partNum = String(part.part_number);
-                                ctx.font = 'bold 12px Arial';
-                                ctx.textAlign = 'center';
-                                ctx.textBaseline = 'middle';
-                                
-                                // Background for text
-                                const textWidth = ctx.measureText(partNum).width;
-                                const textX = x + w / 2;
-                                const textY = y + h / 2;
-                                
-                                ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-                                ctx.fillRect(textX - textWidth / 2 - 4, textY - 10, textWidth + 8, 20);
-                                
-                                // Part number text
-                                ctx.fillStyle = '#1f2937';
-                                ctx.fillText(partNum, textX, textY);
-                                
-                                // Dimensions label (small)
-                                if (w > 40 && h > 40) {
-                                    ctx.font = '8px Arial';
-                                    ctx.fillStyle = '#6b7280';
-                                    const dimText = `${Math.round(part.width)}×${Math.round(part.height)}mm`;
-                                    ctx.fillText(dimText, textX, textY + 12);
-                                }
-                            }
-                        }
-                    });
-                    
-                    // Draw legend
-                    const legendY = sheetY + scaledHeight + 15;
-                    ctx.font = '10px Arial';
-                    ctx.textAlign = 'left';
-                    ctx.fillStyle = '#1f2937';
-                    ctx.fillText('Legend:', padding, legendY);
-                    
-                    const legendItems = [
-                        { color: colors[0], label: 'Parts (Alternating Colors)' },
-                        { color: '#1f2937', label: 'Sheet Border' },
-                        { color: '#e5e7eb', label: 'Grid (50mm spacing)' }
-                    ];
-                    
-                    let legendX = padding + 60;
-                    legendItems.forEach((item, idx) => {
-                        ctx.fillStyle = item.color;
-                        ctx.fillRect(legendX, legendY - 8, 15, 15);
-                        ctx.strokeStyle = '#1f2937';
-                        ctx.lineWidth = 1;
-                        ctx.strokeRect(legendX, legendY - 8, 15, 15);
-                        
-                        ctx.fillStyle = '#6b7280';
-                        ctx.fillText(item.label, legendX + 20, legendY + 2);
-                        legendX += 180;
-                    });
-                    
-                    // Draw dimensions
-                    ctx.fillStyle = '#6b7280';
-                    ctx.font = '9px Arial';
-                    ctx.textAlign = 'right';
-                    ctx.fillText(`Sheet: ${sheetWidth} × ${sheetHeight} mm`, sheetX + scaledWidth, legendY);
-                } else {
-                    // No layout data
-                    ctx.fillStyle = '#999';
-                    ctx.font = '14px Arial';
-                    ctx.textAlign = 'center';
-                    ctx.fillText('No layout data available', canvas.width / 2, canvas.height / 2);
-                }
-            } catch (error) {
-                console.error('Error drawing nesting layout:', error);
-            }
         }
         
         function togglePathView() {
