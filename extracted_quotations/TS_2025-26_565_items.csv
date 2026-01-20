@@ -1,0 +1,5 @@
+SrNo,DrawingNo,PartDescription,Processes,Rate,QtyPerSet,Cost
+1,Side Plate ,260 X 159 X 18,"CNC Waterjet Cutting, ",741.97226,12,8903.66712
+2,Bottom Support Plate,265 X 160 X 22,"CNC Waterjet Cutting, ",1553.0769999999998,6,9318.462
+3,Stiffner - II,115 X 55 X 22,"CNC Waterjet Cutting, ",431.18919999999997,10,4311.892
+4,Stiffner ,147 X 50 X 22,"CNC Waterjet Cutting, ",504.5152,2,1009.0304

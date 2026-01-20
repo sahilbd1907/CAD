@@ -1,7 +1,9 @@
-from flask import Flask, render_template, request, jsonify, send_file, Response, redirect, url_for
+from flask import Flask, render_template, request, jsonify, send_file, Response, redirect, url_for, session, flash
 import json
 import os
 from werkzeug.utils import secure_filename
+from werkzeug.security import check_password_hash, generate_password_hash
+from functools import wraps
 from cad_processor import CADProcessor
 from cost_calculator import CostCalculator
 from pdf_generator import PDFGenerator
@@ -19,10 +21,42 @@ except ImportError:
 app = Flask(__name__, static_url_path='/static', static_folder='static')
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 app.config['UPLOAD_FOLDER'] = 'uploads'
-app.config['SECRET_KEY'] = 'your-secret-key-here'
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-here-change-in-production')
 
 # Ensure upload folder exists
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+# Simple user storage (replace with database in production)
+# Format: {username: {'password_hash': hash, 'email': email}}
+USERS = {
+    'admin': {
+        'password_hash': generate_password_hash('admin123'),  # Change this password!
+        'email': 'admin@example.com'
+    }
+}
+
+def login_required(f):
+    """Decorator to require login for protected routes"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user_id' not in session:
+            flash('Please log in to access this page.', 'error')
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+def is_logged_in():
+    """Helper function to check if user is logged in"""
+    return 'user_id' in session
+
+@app.context_processor
+def inject_user():
+    """Make user info available to all templates"""
+    return {
+        'is_logged_in': is_logged_in(),
+        'current_user': session.get('user_id'),
+        'current_user_email': session.get('user_email')
+    }
 
 # Initialize components
 cad_processor = CADProcessor()
@@ -37,8 +71,52 @@ ALLOWED_EXTENSIONS = {'dxf'}
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    """Login page and authentication"""
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '')
+        remember = request.form.get('remember') == 'on'
+        
+        if not username or not password:
+            flash('Please enter both username and password.', 'error')
+            return render_template('login.html')
+        
+        # Check if user exists and password is correct
+        if username in USERS:
+            if check_password_hash(USERS[username]['password_hash'], password):
+                session['user_id'] = username
+                session['user_email'] = USERS[username].get('email', '')
+                session.permanent = remember  # If remember is checked, session persists
+                flash(f'Welcome back, {username}!', 'success')
+                
+                # Redirect to the page user was trying to access, or home
+                next_page = request.args.get('next')
+                return redirect(next_page) if next_page else redirect(url_for('index'))
+            else:
+                flash('Invalid username or password.', 'error')
+        else:
+            flash('Invalid username or password.', 'error')
+    
+    # If already logged in, redirect to home
+    if 'user_id' in session:
+        return redirect(url_for('index'))
+    
+    return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    """Logout user"""
+    username = session.get('user_id', 'User')
+    session.clear()
+    flash(f'You have been logged out. Goodbye, {username}!', 'success')
+    return redirect(url_for('index'))
+
 @app.route('/')
 def index():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
     return render_template('index.html')
 
 @app.route('/cnc-cutting')
