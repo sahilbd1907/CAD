@@ -72,7 +72,11 @@
                 <div class="col-lg-6">
                     <div class="card card-elevated">
                         <div class="card-body p-4 p-lg-5">
-                            <h5 class="mb-4"><i class="fas fa-upload me-2"></i>Upload Your CAD File</h5>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h5 class="mb-0"><i class="fas fa-upload me-2"></i>Upload Your CAD File</h5>
+                                <span class="badge bg-light text-muted border-0 small">Step 1 of 2</span>
+                            </div>
+                            <p class="text-muted small mb-4">Upload your DXF, then choose material, thickness, and quantity to generate a detailed quotation.</p>
                             <form id="quotationForm" enctype="multipart/form-data">
                                 <div class="mb-3">
                                     <div class="file-upload-area" id="fileUploadArea">
@@ -85,22 +89,32 @@
                                         <div id="fileInfo" class="mt-2"></div>
                                     </div>
                                 </div>
-                                <div class="row g-3">
-                                    <div class="col-md-6">
-                                        <label for="material" class="form-label"><i class="fas fa-layer-group me-1"></i>Material</label>
-                                        <select class="form-select" id="material" name="material" required>
-                                            <option value="">Select Material</option>
-                                            <option value="steel" selected>Steel</option>
-                                            <option value="aluminum">Aluminum</option>
-                                            <option value="plastic">Plastic</option>
-                                            <option value="wood">Wood</option>
-                                            <option value="brass">Brass</option>
-                                            <option value="copper">Copper</option>
-                                        </select>
+                                <div class="job-options-wrapper mt-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span class="text-muted small fw-semibold"><i class="fas fa-sliders-h me-1"></i>Job Parameters</span>
+                                        <span class="badge bg-light text-muted border-0 small">Step 2 of 2</span>
                                     </div>
-                                    <div class="col-md-6">
-                                        <label for="thickness" class="form-label"><i class="fas fa-ruler-vertical me-1"></i>Thickness (mm)</label>
-                                        <input type="number" class="form-control" id="thickness" name="thickness" min="0.1" max="100" step="0.1" value="1.0" required>
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label for="material" class="form-label"><i class="fas fa-layer-group me-1"></i>Material</label>
+                                            <select class="form-select" id="material" name="material" required>
+                                                <option value="">Select Material</option>
+                                                <option value="steel" selected>Steel</option>
+                                                <option value="aluminum">Aluminum</option>
+                                                <option value="plastic">Plastic</option>
+                                                <option value="wood">Wood</option>
+                                                <option value="brass">Brass</option>
+                                                <option value="copper">Copper</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label for="thickness" class="form-label"><i class="fas fa-ruler-vertical me-1"></i>Thickness</label>
+                                            <input type="number" class="form-control" id="thickness" name="thickness" min="0.1" max="100" step="0.1" value="1.0" required>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label for="quantity" class="form-label"><i class="fas fa-hashtag me-1"></i>Quantity</label>
+                                            <input type="number" class="form-control" id="quantity" name="quantity" min="1" step="1" value="1" required>
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="d-grid mt-4">

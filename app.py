@@ -1,9 +1,9 @@
 from flask import Flask, render_template, request, jsonify, send_file, Response, redirect, url_for, session, flash
 import json
 import os
-from werkzeug.utils import secure_filename
-from werkzeug.security import check_password_hash, generate_password_hash
 from functools import wraps
+from werkzeug.utils import secure_filename
+from werkzeug.security import generate_password_hash, check_password_hash
 from cad_processor import CADProcessor
 from cost_calculator import CostCalculator
 from pdf_generator import PDFGenerator
@@ -21,42 +21,36 @@ except ImportError:
 app = Flask(__name__, static_url_path='/static', static_folder='static')
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 app.config['UPLOAD_FOLDER'] = 'uploads'
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-here-change-in-production')
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'change-this-secret-key')
 
-# Ensure upload folder exists
-os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-
-# Simple user storage (replace with database in production)
-# Format: {username: {'password_hash': hash, 'email': email}}
+# Simple in-memory users (replace with real DB in production)
 USERS = {
-    'admin': {
-        'password_hash': generate_password_hash('admin123'),  # Change this password!
-        'email': 'admin@example.com'
-    }
+    "admin": generate_password_hash("admin123")
 }
 
 def login_required(f):
-    """Decorator to require login for protected routes"""
+    """Require a logged-in user for protected routes."""
     @wraps(f)
-    def decorated_function(*args, **kwargs):
+    def wrapped(*args, **kwargs):
         if 'user_id' not in session:
-            flash('Please log in to access this page.', 'error')
             return redirect(url_for('login'))
         return f(*args, **kwargs)
-    return decorated_function
+    return wrapped
 
 def is_logged_in():
-    """Helper function to check if user is logged in"""
+    """Helper to check if a user is logged in."""
     return 'user_id' in session
 
 @app.context_processor
 def inject_user():
-    """Make user info available to all templates"""
+    """Make auth info available in all templates (for nav login/logout)."""
     return {
         'is_logged_in': is_logged_in(),
-        'current_user': session.get('user_id'),
-        'current_user_email': session.get('user_email')
+        'current_user': session.get('user_id')
     }
+
+# Ensure upload folder exists
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 # Initialize components
 cad_processor = CADProcessor()
@@ -71,52 +65,49 @@ ALLOWED_EXTENSIONS = {'dxf'}
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+@app.route('/')
+def index():
+    """Root route: if not logged in, go to login; otherwise go to dashboard."""
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    return redirect(url_for('dashboard'))
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    """Login page and authentication"""
+    """Login page and authentication."""
     if request.method == 'POST':
         username = request.form.get('username', '').strip()
         password = request.form.get('password', '')
-        remember = request.form.get('remember') == 'on'
-        
+
         if not username or not password:
             flash('Please enter both username and password.', 'error')
             return render_template('login.html')
-        
-        # Check if user exists and password is correct
-        if username in USERS:
-            if check_password_hash(USERS[username]['password_hash'], password):
-                session['user_id'] = username
-                session['user_email'] = USERS[username].get('email', '')
-                session.permanent = remember  # If remember is checked, session persists
-                flash(f'Welcome back, {username}!', 'success')
-                
-                # Redirect to the page user was trying to access, or home
-                next_page = request.args.get('next')
-                return redirect(next_page) if next_page else redirect(url_for('index'))
-            else:
-                flash('Invalid username or password.', 'error')
-        else:
-            flash('Invalid username or password.', 'error')
-    
-    # If already logged in, redirect to home
+
+        pwd_hash = USERS.get(username)
+        if pwd_hash and check_password_hash(pwd_hash, password):
+            session['user_id'] = username
+            flash(f'Welcome, {username}!', 'success')
+            return redirect(url_for('dashboard'))
+
+        flash('Invalid username or password.', 'error')
+
+    # If already logged in, go straight to dashboard
     if 'user_id' in session:
-        return redirect(url_for('index'))
-    
+        return redirect(url_for('dashboard'))
+
     return render_template('login.html')
 
 @app.route('/logout')
 def logout():
-    """Logout user"""
-    username = session.get('user_id', 'User')
+    """Log out the current user."""
     session.clear()
-    flash(f'You have been logged out. Goodbye, {username}!', 'success')
-    return redirect(url_for('index'))
+    flash('You have been logged out.', 'success')
+    return redirect(url_for('login'))
 
-@app.route('/')
-def index():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
+@app.route('/dashboard')
+@login_required
+def dashboard():
+    """Main dashboard page (was previously index)."""
     return render_template('index.html')
 
 @app.route('/cnc-cutting')
@@ -152,14 +143,16 @@ def upload_file():
             # Process CAD file
             geometry_data = cad_processor.process_dxf(filepath)
             
-            # Get material and thickness from form
+            # Get material, thickness and quantity from form
             material = request.form.get('material', 'steel')
             thickness = float(request.form.get('thickness', 1.0))
+            quantity = int(request.form.get('quantity', 1))
             
-            # Calculate costs
+            # Calculate costs (per part)
             cutting_length = geometry_data['total_length']
             machining_time = cost_calculator.calculate_machining_time(cutting_length, material, thickness)
-            total_cost = cost_calculator.calculate_total_cost(machining_time, material, thickness, cutting_length)
+            total_cost_per_part = cost_calculator.calculate_total_cost(machining_time, material, thickness, cutting_length)
+            total_cost = total_cost_per_part * max(quantity, 1)
             
             # Get AI recommendations (async/non-blocking - can be slow)
             ai_recommendations = None
@@ -177,7 +170,9 @@ def upload_file():
                 'geometry': geometry_data,
                 'material': material,
                 'thickness': thickness,
+                'quantity': quantity,
                 'machining_time': machining_time,
+                'total_cost_per_part': total_cost_per_part,
                 'total_cost': total_cost,
                 'ai_recommendations': ai_recommendations
             }
@@ -333,7 +328,12 @@ def generate_pdf(result_id):
     if not data:
         return jsonify({'error': 'Not found'}), 404
     filename = pdf_generator.generate_quotation(
-        data['geometry'], data['material'], data['thickness'], data['machining_time'], data['total_cost']
+        data['geometry'],
+        data['material'],
+        data['thickness'],
+        data['machining_time'],
+        data['total_cost'],
+        data.get('quantity', 1)
     )
     return redirect(url_for('download_pdf', filename=filename))
 

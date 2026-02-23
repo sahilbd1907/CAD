@@ -76,7 +76,7 @@ class PDFGenerator:
         self.border_color = colors.HexColor('#e5e7eb')
     
     def generate_quotation(self, geometry_data: Dict, material: str, thickness: float, 
-                          machining_time: float, total_cost: float) -> str:
+                          machining_time: float, total_cost: float, quantity: int = 1) -> str:
         """
         Generate a professional PDF quotation
         """
@@ -106,11 +106,11 @@ class PDFGenerator:
         story.append(Spacer(1, 0.3*inch))
         
         # Executive Summary Box
-        story.extend(self._create_executive_summary(geometry_data, material, thickness, machining_time))
+        story.extend(self._create_executive_summary(geometry_data, material, thickness, machining_time, quantity))
         story.append(Spacer(1, 0.25*inch))
         
         # Project Details Section
-        story.extend(self._create_project_details(geometry_data, material, thickness, quote_number, machining_time))
+        story.extend(self._create_project_details(geometry_data, material, thickness, quote_number, machining_time, quantity))
         story.append(Spacer(1, 0.25*inch))
         
         # Technical Specifications
@@ -119,7 +119,7 @@ class PDFGenerator:
         
         # Cost Breakdown
         story.extend(self._create_detailed_cost_breakdown(geometry_data, material, thickness, 
-                                                         machining_time, total_cost))
+                                                         machining_time, total_cost, quantity))
         story.append(Spacer(1, 0.25*inch))
         
         # Terms and Conditions
@@ -255,8 +255,12 @@ class PDFGenerator:
             leading=13
         )
         
-        date_str = datetime.now().strftime("%B %d, %Y")
-        valid_until = (datetime.now().replace(day=1) if datetime.now().day > 15 else datetime.now()).strftime("%B %d, %Y")
+        now = datetime.now()
+        date_str = now.strftime("%B %d, %Y")
+        # Valid until = 30 days from date issued
+        from datetime import timedelta
+        valid_until_date = now + timedelta(days=30)
+        valid_until = valid_until_date.strftime("%B %d, %Y")
         
         content = [
             Paragraph("QUOTATION", quote_title_style),
@@ -270,7 +274,7 @@ class PDFGenerator:
         
         return content
     
-    def _create_executive_summary(self, geometry_data: Dict, material: str, thickness: float, machining_time: float):
+    def _create_executive_summary(self, geometry_data: Dict, material: str, thickness: float, machining_time: float, quantity: int):
         """Create executive summary box"""
         elements = []
         
@@ -284,14 +288,14 @@ class PDFGenerator:
         setup_cost = 500.00
         subtotal = material_cost + labor_cost + setup_cost
         gst = subtotal * 0.18
-        final_total = subtotal + gst
+        final_total = (subtotal + gst) * max(quantity, 1)
         
         summary_data = [
             [
                 self._create_summary_box("Total Cost", f"Rs. {final_total:,.2f}", self.accent_color),
                 self._create_summary_box("Material", material.capitalize(), self.secondary_color),
                 self._create_summary_box("Thickness", f"{thickness} mm", self.primary_color),
-                self._create_summary_box("Cutting Length", f"{cutting_length:.1f} mm", colors.HexColor('#8b5cf6'))
+                self._create_summary_box("Quantity", f"{max(quantity, 1)} pcs", colors.HexColor('#8b5cf6'))
             ]
         ]
         
@@ -349,10 +353,10 @@ class PDFGenerator:
         
         return box_table
     
-    def _create_project_details(self, geometry_data: Dict, material: str, thickness: float, quote_number: str, machining_time: float):
-        """Create detailed project information section"""
+    def _create_project_details(self, geometry_data: Dict, material: str, thickness: float, quote_number: str, machining_time: float, quantity: int):
+        """Create detailed project information section in a symmetric 4-column table"""
         elements = []
-        
+
         # Section header
         section_header = ParagraphStyle(
             'SectionHeader',
@@ -365,70 +369,77 @@ class PDFGenerator:
             borderPadding=0
         )
         elements.append(Paragraph("Project Specifications", section_header))
-        
-        # Two-column layout - use Paragraph objects for HTML tags
-        left_data = [
-            [Paragraph('<b>Quotation Reference:</b>', self.styles['Normal']), quote_number],
-            [Paragraph('<b>Project Date:</b>', self.styles['Normal']), datetime.now().strftime("%B %d, %Y")],
-            [Paragraph('<b>Material Type:</b>', self.styles['Normal']), material.capitalize()],
-            [Paragraph('<b>Material Thickness:</b>', self.styles['Normal']), f"{thickness} mm"],
+
+        label_style = ParagraphStyle(
+            'SpecLabel',
+            parent=self.styles['Normal'],
+            fontSize=9,
+            textColor=colors.HexColor('#4b5563'),
+            leading=11
+        )
+        value_style = ParagraphStyle(
+            'SpecValue',
+            parent=self.styles['Normal'],
+            fontSize=10,
+            textColor=self.dark_gray,
+            leading=12
+        )
+
+        qty = max(quantity, 1)
+
+        rows = [
+            [
+                Paragraph('<b>Quotation Reference:</b>', label_style),
+                Paragraph(quote_number, value_style),
+                Paragraph('<b>Total Cutting Length:</b>', label_style),
+                Paragraph(f"{geometry_data.get('total_length', 0):.2f} mm", value_style),
+            ],
+            [
+                Paragraph('<b>Project Date:</b>', label_style),
+                Paragraph(datetime.now().strftime("%B %d, %Y"), value_style),
+                Paragraph('<b>Estimated Time (per part):</b>', label_style),
+                Paragraph(f"{machining_time:.1f} min", value_style),
+            ],
+            [
+                Paragraph('<b>Material Type:</b>', label_style),
+                Paragraph(material.capitalize(), value_style),
+                Paragraph('<b>Quantity:</b>', label_style),
+                Paragraph(f"{qty} pcs", value_style),
+            ],
+            [
+                Paragraph('<b>Material Thickness:</b>', label_style),
+                Paragraph(f"{thickness} mm", value_style),
+                Paragraph('<b>Total Entities:</b>', label_style),
+                Paragraph(str(geometry_data.get('complexity_metrics', {}).get('total_entities', 0)), value_style),
+            ],
         ]
-        
-        right_data = [
-            [Paragraph('<b>Total Cutting Length:</b>', self.styles['Normal']), f"{geometry_data.get('total_length', 0):.2f} mm"],
-            [Paragraph('<b>Estimated Time:</b>', self.styles['Normal']), f"{machining_time:.1f} min"],
-            [Paragraph('<b>Complexity Score:</b>', self.styles['Normal']), f"{geometry_data.get('complexity_metrics', {}).get('complexity_score', 'N/A')}/100"],
-            [Paragraph('<b>Total Entities:</b>', self.styles['Normal']), str(geometry_data.get('complexity_metrics', {}).get('total_entities', 0))],
-        ]
-        
-        # Add bounding box if available
+
+        # Optional bounding box row
         if 'bounding_box' in geometry_data and geometry_data['bounding_box'].get('width', 0) > 0:
             bbox = geometry_data['bounding_box']
-            left_data.append([Paragraph('<b>Drawing Dimensions:</b>', self.styles['Normal']), f"{bbox.get('width', 0):.1f} × {bbox.get('height', 0):.1f} mm"])
-            right_data.append([Paragraph('<b>Drawing Area:</b>', self.styles['Normal']), f"{bbox.get('area', 0):.1f} mm²"])
-        
-        left_table = Table(left_data, colWidths=[2.2*inch, 2.8*inch])
-        left_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (0, -1), self.light_gray),
+            rows.append([
+                Paragraph('<b>Drawing Dimensions:</b>', label_style),
+                Paragraph(f"{bbox.get('width', 0):.1f} × {bbox.get('height', 0):.1f} mm", value_style),
+                Paragraph('<b>Drawing Area:</b>', label_style),
+                Paragraph(f"{bbox.get('area', 0):.1f} mm²", value_style),
+            ])
+
+        spec_table = Table(rows, colWidths=[1.6*inch, 2.0*inch, 1.6*inch, 2.0*inch])
+        spec_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, -1), self.light_gray),
             ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
-            ('ALIGN', (0, 0), (0, -1), 'LEFT'),
-            ('ALIGN', (1, 0), (1, -1), 'LEFT'),
-            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
-            ('FONTSIZE', (0, 0), (-1, -1), 10),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
-            ('TOPPADDING', (0, 0), (-1, -1), 10),
-            ('LEFTPADDING', (0, 0), (-1, -1), 12),
-            ('RIGHTPADDING', (0, 0), (-1, -1), 12),
-            ('GRID', (0, 0), (-1, -1), 0.5, self.border_color),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ]))
-        
-        right_table = Table(right_data, colWidths=[2.2*inch, 2.8*inch])
-        right_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (0, -1), self.light_gray),
-            ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
-            ('ALIGN', (0, 0), (0, -1), 'LEFT'),
-            ('ALIGN', (1, 0), (1, -1), 'LEFT'),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
             ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
-            ('FONTSIZE', (0, 0), (-1, -1), 10),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
-            ('TOPPADDING', (0, 0), (-1, -1), 10),
-            ('LEFTPADDING', (0, 0), (-1, -1), 12),
-            ('RIGHTPADDING', (0, 0), (-1, -1), 12),
+            ('FONTSIZE', (0, 0), (-1, -1), 9),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+            ('TOPPADDING', (0, 0), (-1, -1), 8),
+            ('LEFTPADDING', (0, 0), (-1, -1), 10),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 10),
             ('GRID', (0, 0), (-1, -1), 0.5, self.border_color),
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
         ]))
-        
-        # Combine in two columns
-        combined_data = [[left_table, right_table]]
-        combined_table = Table(combined_data, colWidths=[3.5*inch, 3.5*inch])
-        combined_table.setStyle(TableStyle([
-            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-            ('LEFTPADDING', (0, 0), (-1, -1), 0),
-            ('RIGHTPADDING', (0, 0), (-1, -1), 0),
-        ]))
-        
-        elements.append(combined_table)
+
+        elements.append(spec_table)
         return elements
     
     def _create_technical_specs(self, geometry_data: Dict):
@@ -526,7 +537,7 @@ class PDFGenerator:
         return elements
     
     def _create_detailed_cost_breakdown(self, geometry_data: Dict, material: str, thickness: float,
-                                       machining_time: float, total_cost: float):
+                                       machining_time: float, total_cost: float, quantity: int):
         """Create detailed cost breakdown section"""
         elements = []
         
@@ -543,11 +554,17 @@ class PDFGenerator:
         # Calculate individual costs
         from cost_calculator import CostCalculator
         calc = CostCalculator()
-        material_cost = calc.calculate_material_cost(geometry_data['total_length'], thickness, material)
-        labor_cost = calc.calculate_labor_cost(machining_time, material)
-        setup_cost = 500.00  # Standard setup fee
+        # Per-part costs
+        per_part_material_cost = calc.calculate_material_cost(geometry_data['total_length'], thickness, material)
+        per_part_labor_cost = calc.calculate_labor_cost(machining_time, material)
+        setup_cost = 500.00  # Standard setup fee (per job)
+        qty = max(quantity, 1)
         
-        # Calculate base subtotal (material + labor + setup)
+        # Total costs with respect to quantity
+        material_cost = per_part_material_cost * qty
+        labor_cost = per_part_labor_cost * qty
+        
+        # Calculate base subtotal (material + laser cutting service + setup)
         subtotal_before_tax = material_cost + labor_cost + setup_cost
         
         # Calculate GST (18%)
@@ -557,7 +574,7 @@ class PDFGenerator:
         # Final total should include GST
         calculated_total = subtotal_before_tax + tax_amount
         
-        # Calculate final total including GST
+        # Final total including GST
         final_total = subtotal_before_tax + tax_amount
         
         # Cost breakdown table
@@ -573,11 +590,11 @@ class PDFGenerator:
              Paragraph('<b>Unit Price</b>', self.styles['Normal']), 
              Paragraph('<b>Amount (Rs.)</b>', self.styles['Normal'])],
             ['Material Cost', f"{material.capitalize()} ({thickness}mm)", 
-             f"{geometry_data.get('total_length', 0):.1f} mm", 
-             f"Rs. {material_cost/max(geometry_data.get('total_length', 1), 1):.4f}/mm",
+             f"{qty} pcs", 
+             f"Rs. {per_part_material_cost:,.2f} / part",
              f"Rs. {material_cost:,.2f}"],
-            ['Laser Cutting Service', f"Time-based", 
-             f"{machining_time:.1f} min", 
+            ['Laser Cutting Service', f"Time-based machining", 
+             f"{qty} pcs × {machining_time:.1f} min", 
              f"Rs. {per_minute_rate:.2f}/min",
              f"Rs. {labor_cost:,.2f}"],
             ['Material Handling', 'Material positioning', '1', 'Rs. 500.00', 'Rs. 500.00'],

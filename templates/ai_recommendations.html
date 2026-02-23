@@ -61,9 +61,31 @@
             </button>
             <div class="collapse navbar-collapse" id="navContent">
                 <ul class="navbar-nav ms-auto align-items-lg-center">
-                    <li class="nav-item me-lg-3"><a class="nav-link" href="/">Home</a></li>
+                    <li class="nav-item me-lg-3"><a class="nav-link" href="#features">Features</a></li>
                     <li class="nav-item me-lg-3"><a class="nav-link" href="/features/{{ result_id }}">Analysis</a></li>
                     <li class="nav-item me-lg-3"><a class="nav-link" href="/cnc-cutting">CNC Cutting</a></li>
+                    <li class="nav-item me-lg-3"><a class="nav-link" href="/pricing">Pricing</a></li>
+                    <li class="nav-item me-lg-3"><a class="nav-link" href="/faq">FAQ</a></li>
+                    <li class="nav-item me-lg-3"><a class="nav-link" href="/about">About</a></li>
+                    <li class="nav-item me-lg-3"><a class="nav-link" href="/contact">Contact</a></li>
+                    {% if is_logged_in %}
+                    <li class="nav-item me-lg-3">
+                        <a class="nav-link" href="#">
+                            <i class="fas fa-user me-1"></i>{{ current_user }}
+                        </a>
+                    </li>
+                    <li class="nav-item me-lg-3">
+                        <a class="nav-link" href="/logout">
+                            <i class="fas fa-sign-out-alt me-1"></i>Logout
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="nav-item me-lg-3">
+                        <a class="nav-link" href="/login">
+                            <i class="fas fa-sign-in-alt me-1"></i>Login
+                        </a>
+                    </li>
+                    {% endif %}
                     <li class="nav-item">
                         <button id="themeToggle" class="btn btn-sm btn-outline-secondary">
                             <i class="fa-solid fa-moon"></i>
