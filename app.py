@@ -10,6 +10,8 @@ from pdf_generator import PDFGenerator
 from ai_advisor import AIAdvisor
 import tempfile
 from pdf_utils import extract_pdf_text
+from datetime import datetime
+from pymongo import MongoClient
 
 # Load environment variables from .env file
 try:
@@ -22,6 +24,12 @@ app = Flask(__name__, static_url_path='/static', static_folder='static')
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'change-this-secret-key')
+
+# MongoDB configuration
+MONGODB_URI = os.environ.get('MONGODB_URI', 'mongodb://localhost:27017/cad_app')
+mongo_client = MongoClient(MONGODB_URI)
+db = mongo_client.get_database()
+calculations_collection = db['calculations']
 
 # Simple in-memory users (replace with real DB in production)
 USERS = {
@@ -176,6 +184,31 @@ def upload_file():
                 'total_cost': total_cost,
                 'ai_recommendations': ai_recommendations
             }
+
+            # Persist calculation details to MongoDB
+            try:
+                calculations_collection.insert_one({
+                    'result_id': result_id,
+                    'cad_filename': filename,
+                    'input': {
+                        'material': material,
+                        'thickness': thickness,
+                        'quantity': quantity,
+                    },
+                    'calculated': {
+                        'total_length': cutting_length,
+                        'machining_time': machining_time,
+                    },
+                    'quotation': {
+                        'total_cost_per_part': total_cost_per_part,
+                        'total_cost': total_cost,
+                        'pdf_filename': None,  # will be updated when PDF is generated
+                    },
+                    'created_at': datetime.utcnow(),
+                })
+            except Exception as e:
+                # Log DB errors but don't block the main flow
+                print(f"MongoDB insert error (non-critical): {e}")
 
             # Clean up uploaded file
             os.remove(filepath)
@@ -335,6 +368,21 @@ def generate_pdf(result_id):
         data['total_cost'],
         data.get('quantity', 1)
     )
+
+    # Update MongoDB record with PDF info
+    try:
+        calculations_collection.update_one(
+            {'result_id': result_id},
+            {
+                '$set': {
+                    'quotation.pdf_filename': filename,
+                    'quotation.pdf_generated_at': datetime.utcnow(),
+                }
+            },
+        )
+    except Exception as e:
+        print(f"MongoDB update error (non-critical): {e}")
+
     return redirect(url_for('download_pdf', filename=filename))
 
 @app.route('/pricing')
@@ -414,4 +462,4 @@ def _extract_brochure_sections(text: str):
     return about_text, services, contact
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=False, host='0.0.0.0', port=5000 , use_reloader=False)

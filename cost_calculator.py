@@ -6,12 +6,12 @@ class CostCalculator:
         # Material costs per cubic mm in INR (updated for 2024-2025 Indian market)
         # Based on average material costs in Pune/Mumbai market
         self.material_costs = {
-            'steel': 0.0080,      # Rs. 8 per cm³ (mild steel sheets)
-            'aluminum': 0.0250,   # Rs. 25 per cm³ (aluminum sheets)
-            'plastic': 0.0040,    # Rs. 4 per cm³ (acrylic/plastic sheets)
-            'wood': 0.0020,       # Rs. 2 per cm³ (plywood/MDF)
-            'brass': 0.0750,      # Rs. 75 per cm³ (brass sheets)
-            'copper': 0.0900      # Rs. 90 per cm³ (copper sheets)
+            'steel': 0.41,      # Rs. 410 per cm³ (mild steel sheets)
+            'aluminum': 0.35,   # Rs. 350 per cm³ (aluminum sheets)
+            'plastic': 0.004,    # Rs. 4 per cm³ (acrylic/plastic sheets)
+            'wood': 0.020,       # Rs. 20 per cm³ (plywood/MDF)
+            'brass': 0.6,      # Rs. 600 per cm³ (brass sheets)
+            'copper': 0.6      # Rs. 600 per cm³ (copper sheets)
         }
         
         # Machine hourly rates in INR (time-based costing as per Indian standards)
@@ -19,31 +19,31 @@ class CostCalculator:
         # Operational cost base: Rs. 230/hour + 50% markup = Rs. 345/hour average
         # Material-specific adjustments applied
         self.machine_rates = {
-            'steel': 400.0,       # Rs. 400/hour (most common, optimized for steel)
-            'aluminum': 380.0,    # Rs. 380/hour (faster cutting, slightly lower)
-            'plastic': 320.0,     # Rs. 320/hour (faster, lower operational cost)
-            'wood': 300.0,        # Rs. 300/hour (fastest, lowest operational cost)
-            'brass': 420.0,       # Rs. 420/hour (harder material, higher cost)
-            'copper': 450.0       # Rs. 450/hour (highly reflective, requires more power)
+            'steel': 4000.0,       # Rs. 4000/hour (most common, optimized for steel)
+            'aluminum': 4000.0,    # Rs. 4000/hour (faster cutting, slightly lower)
+            'plastic': 4000.0,     # Rs. 4000/hour (faster, lower operational cost)
+            'wood': 4000.0,        # Rs. 4000/hour (fastest, lowest operational cost)
+            'brass': 4000.0,       # Rs. 4000/hour (harder material, higher cost)
+            'copper': 4000.0       # Rs. 4000/hour (highly reflective, requires more power)
         }
         
         # Water jet cutting rates (when applicable)
         # Operational cost base: Rs. 333/hour + 50% markup = Rs. 500/hour average
         self.waterjet_rates = {
-            'steel': 500.0,
-            'aluminum': 480.0,
-            'plastic': 450.0,
-            'wood': 400.0,
-            'brass': 520.0,
-            'copper': 530.0
+            'steel': 4000.0,
+            'aluminum': 400.0,
+            'plastic': 4000.0,
+            'wood': 4000.0,
+            'brass': 4000.0,
+            'copper': 4000.0
         }
         
         # Material-specific feed rates (mm/min) - Laser cutting speeds
         # Updated based on typical fiber laser cutting speeds in India
         self.feed_rates = {
-            'steel': 250,         # 1-3mm steel: 250-400 mm/min
+            'steel': 400,         # 1-3mm steel: 250-400 mm/min
             'aluminum': 600,      # 1-3mm aluminum: 500-800 mm/min
-            'plastic': 800,       # Acrylic/PVC: 700-1000 mm/min
+            'plastic': 900,       # Acrylic/PVC: 700-1000 mm/min
             'wood': 1200,         # Plywood/MDF: 1000-1500 mm/min
             'brass': 350,         # 1-3mm brass: 300-500 mm/min
             'copper': 300         # 1-3mm copper: 250-400 mm/min (slower due to reflectivity)
@@ -54,10 +54,10 @@ class CostCalculator:
         
         # Tool change time in minutes (not applicable for laser, but kept for compatibility)
         # For laser: this represents material changeover time
-        self.tool_change_time = 2.0
+        self.tool_change_time = 5.0
         
         # Safety factor for time estimation
-        self.time_safety_factor = 1.15
+        self.time_safety_factor = 5.0
     
     def calculate_machining_time(self, cutting_length: float, material: str, thickness: float) -> float:
         """
