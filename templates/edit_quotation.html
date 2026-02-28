@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Quotation · Tech support</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+    <link href="/static/css/styles.css" rel="stylesheet">
+    <link href="/branding.css" rel="stylesheet">
+    <style>
+        .edit-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .form-section {
+            margin-bottom: 30px;
+            padding-bottom: 30px;
+            border-bottom: 1px solid var(--border);
+        }
+        .form-section:last-child {
+            border-bottom: none;
+        }
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-strong);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .section-title i {
+            color: var(--brand-primary);
+        }
+        .info-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 12px;
+            border-radius: 6px;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body class="bg-app">
+    <!-- Top Nav -->
+    <nav class="navbar navbar-expand-lg navbar-glass sticky-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold d-flex align-items-center" href="/">
+                <img src="/static/img/tech_support_logo.jpg" alt="Tech support" height="55" class="me-2" onerror="this.style.display='none'">
+                Tech support
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navContent">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navContent">
+                <ul class="navbar-nav ms-auto align-items-lg-center">
+                    <li class="nav-item me-lg-3"><a class="nav-link" href="/dashboard">Dashboard</a></li>
+                    <li class="nav-item me-lg-3"><a class="nav-link" href="/history"><i class="fas fa-history me-1"></i>History</a></li>
+                    <li class="nav-item me-lg-3"><a class="nav-link" href="/cnc-cutting">CNC Cutting</a></li>
+                    {% if is_logged_in %}
+                    <li class="nav-item me-lg-3">
+                        <a class="nav-link" href="#">
+                            <i class="fas fa-user me-1"></i>{{ current_user }}
+                        </a>
+                    </li>
+                    <li class="nav-item me-lg-3">
+                        <a class="nav-link" href="/logout">
+                            <i class="fas fa-sign-out-alt me-1"></i>Logout
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="nav-item me-lg-3">
+                        <a class="nav-link" href="/login">
+                            <i class="fas fa-sign-in-alt me-1"></i>Login
+                        </a>
+                    </li>
+                    {% endif %}
+                    <li class="nav-item">
+                        <button id="themeToggle" class="btn btn-sm btn-outline-secondary">
+                            <i class="fa-solid fa-moon"></i>
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="py-5 py-lg-6">
+        <div class="container">
+            <div class="mb-4">
+                <a href="/history" class="btn btn-outline-secondary mb-3">
+                    <i class="fas fa-arrow-left me-2"></i>Back to History
+                </a>
+                <h1 class="display-6 fw-bold mb-2">
+                    <i class="fas fa-edit me-2 text-primary"></i>Edit Quotation
+                </h1>
+                <p class="text-muted">Update quotation details</p>
+            </div>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'danger' if category == 'error' else 'success' if category == 'success' else 'warning' }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <div class="edit-card card-elevated">
+                <form method="POST" action="/edit/{{ quotation['_id'] }}">
+                    <!-- File Information -->
+                    <div class="form-section">
+                        <h3 class="section-title">
+                            <i class="fas fa-file"></i>File Information
+                        </h3>
+                        <div class="info-badge">
+                            <i class="fas fa-file-alt me-2"></i>
+                            {{ quotation.get('cad_filename', 'Unknown File') }}
+                        </div>
+                        <div class="info-badge">
+                            <i class="fas fa-calendar me-2"></i>
+                            Created: {{ quotation.get('created_at_formatted', 'N/A') }}
+                        </div>
+                        {% if quotation.get('result_id') %}
+                        <div class="info-badge">
+                            <i class="fas fa-hashtag me-2"></i>
+                            ID: {{ quotation.get('result_id', '') }}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Input Parameters -->
+                    <div class="form-section">
+                        <h3 class="section-title">
+                            <i class="fas fa-sliders-h"></i>Input Parameters
+                        </h3>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="material" class="form-label">
+                                    <i class="fas fa-layer-group me-1"></i>Material
+                                </label>
+                                <select class="form-select" id="material" name="material" required>
+                                    <option value="">Select Material</option>
+                                    <option value="steel" {% if quotation.get('input', {}).get('material') == 'steel' %}selected{% endif %}>Steel</option>
+                                    <option value="aluminum" {% if quotation.get('input', {}).get('material') == 'aluminum' %}selected{% endif %}>Aluminum</option>
+                                    <option value="plastic" {% if quotation.get('input', {}).get('material') == 'plastic' %}selected{% endif %}>Plastic</option>
+                                    <option value="wood" {% if quotation.get('input', {}).get('material') == 'wood' %}selected{% endif %}>Wood</option>
+                                    <option value="brass" {% if quotation.get('input', {}).get('material') == 'brass' %}selected{% endif %}>Brass</option>
+                                    <option value="copper" {% if quotation.get('input', {}).get('material') == 'copper' %}selected{% endif %}>Copper</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="thickness" class="form-label">
+                                    <i class="fas fa-ruler-vertical me-1"></i>Thickness (mm)
+                                </label>
+                                <input type="number" class="form-control" id="thickness" name="thickness" 
+                                       min="0.1" max="100" step="0.1" 
+                                       value="{{ quotation.get('input', {}).get('thickness', 1.0) }}" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="quantity" class="form-label">
+                                    <i class="fas fa-hashtag me-1"></i>Quantity
+                                </label>
+                                <input type="number" class="form-control" id="quantity" name="quantity" 
+                                       min="1" step="1" 
+                                       value="{{ quotation.get('input', {}).get('quantity', 1) }}" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Calculated Values (Read-only) -->
+                    <div class="form-section">
+                        <h3 class="section-title">
+                            <i class="fas fa-calculator"></i>Calculated Values
+                        </h3>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Cutting Length (mm)</label>
+                                <input type="text" class="form-control" 
+                                       value="{{ "%.2f"|format(quotation.get('calculated', {}).get('total_length', 0)) }}" 
+                                       readonly style="background-color: var(--surface-2);">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Machining Time (min)</label>
+                                <input type="text" class="form-control" 
+                                       value="{{ "%.2f"|format(quotation.get('calculated', {}).get('machining_time', 0)) }}" 
+                                       readonly style="background-color: var(--surface-2);">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quotation Costs -->
+                    <div class="form-section">
+                        <h3 class="section-title">
+                            <i class="fas fa-dollar-sign"></i>Quotation Costs
+                        </h3>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="total_cost_per_part" class="form-label">
+                                    <i class="fas fa-tag me-1"></i>Cost per Part ($)
+                                </label>
+                                <input type="number" class="form-control" id="total_cost_per_part" name="total_cost_per_part" 
+                                       min="0" step="0.01" 
+                                       value="{{ "%.2f"|format(quotation.get('quotation', {}).get('total_cost_per_part', 0)) }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="total_cost" class="form-label">
+                                    <i class="fas fa-money-bill-wave me-1"></i>Total Cost ($)
+                                </label>
+                                <input type="number" class="form-control" id="total_cost" name="total_cost" 
+                                       min="0" step="0.01" 
+                                       value="{{ "%.2f"|format(quotation.get('quotation', {}).get('total_cost', 0)) }}" required>
+                            </div>
+                        </div>
+                        <small class="text-muted mt-2 d-block">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Note: Total Cost should equal Cost per Part × Quantity
+                        </small>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="d-flex gap-3 justify-content-end">
+                        <a href="/history" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-2"></i>Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer py-4">
+        <div class="container d-flex flex-column flex-lg-row justify-content-between align-items-center gap-2">
+            <div class="text-muted small">© <span id="yearNow"></span> Tech support</div>
+            <div class="d-flex gap-3 small">
+                <a href="#" class="link-secondary text-decoration-none">Terms</a>
+                <a href="#" class="link-secondary text-decoration-none">Privacy</a>
+                <a href="/contact" class="link-secondary text-decoration-none">Contact</a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/js/app.js"></script>
+    <script>
+        // Auto-calculate total cost when quantity or cost per part changes
+        document.getElementById('quantity').addEventListener('input', updateTotalCost);
+        document.getElementById('total_cost_per_part').addEventListener('input', updateTotalCost);
+        
+        function updateTotalCost() {
+            const quantity = parseFloat(document.getElementById('quantity').value) || 0;
+            const costPerPart = parseFloat(document.getElementById('total_cost_per_part').value) || 0;
+            const totalCost = quantity * costPerPart;
+            document.getElementById('total_cost').value = totalCost.toFixed(2);
+        }
+    </script>
+</body>
+</html>
+

@@ -76,7 +76,8 @@ class PDFGenerator:
         self.border_color = colors.HexColor('#e5e7eb')
     
     def generate_quotation(self, geometry_data: Dict, material: str, thickness: float, 
-                          machining_time: float, total_cost: float, quantity: int = 1) -> str:
+                          machining_time: float, total_cost: float, quantity: int = 1, 
+                          total_cost_per_part: float = None) -> str:
         """
         Generate a professional PDF quotation
         """
@@ -106,7 +107,7 @@ class PDFGenerator:
         story.append(Spacer(1, 0.3*inch))
         
         # Executive Summary Box
-        story.extend(self._create_executive_summary(geometry_data, material, thickness, machining_time, quantity))
+        story.extend(self._create_executive_summary(geometry_data, material, thickness, machining_time, quantity, total_cost, total_cost_per_part))
         story.append(Spacer(1, 0.25*inch))
         
         # Project Details Section
@@ -119,7 +120,7 @@ class PDFGenerator:
         
         # Cost Breakdown
         story.extend(self._create_detailed_cost_breakdown(geometry_data, material, thickness, 
-                                                         machining_time, total_cost, quantity))
+                                                         machining_time, total_cost, quantity, total_cost_per_part))
         story.append(Spacer(1, 0.25*inch))
         
         # Terms and Conditions
@@ -274,21 +275,33 @@ class PDFGenerator:
         
         return content
     
-    def _create_executive_summary(self, geometry_data: Dict, material: str, thickness: float, machining_time: float, quantity: int):
+    def _create_executive_summary(self, geometry_data: Dict, material: str, thickness: float, machining_time: float, quantity: int, total_cost: float = None, total_cost_per_part: float = None):
         """Create executive summary box"""
         elements = []
         
-        # Recalculate total cost with setup and GST to match cost breakdown
-        from cost_calculator import CostCalculator
-        calc = CostCalculator()
-        cutting_length = geometry_data.get('total_length', 0)
-        
-        material_cost = calc.calculate_material_cost(cutting_length, thickness, material)
-        labor_cost = calc.calculate_labor_cost(machining_time, material)
-        setup_cost = 500.00
-        subtotal = material_cost + labor_cost + setup_cost
-        gst = subtotal * 0.18
-        final_total = (subtotal + gst) * max(quantity, 1)
+        # Use provided total_cost if available (treat as subtotal), otherwise recalculate
+        if total_cost is not None and total_cost > 0:
+            # total_cost in database is subtotal (before GST)
+            subtotal = total_cost
+            gst = subtotal * 0.18
+            final_total = subtotal + gst
+        elif total_cost_per_part is not None and total_cost_per_part > 0:
+            # total_cost_per_part is subtotal per part (before GST)
+            subtotal = total_cost_per_part * max(quantity, 1)
+            gst = subtotal * 0.18
+            final_total = subtotal + gst
+        else:
+            # Recalculate total cost with setup and GST to match cost breakdown
+            from cost_calculator import CostCalculator
+            calc = CostCalculator()
+            cutting_length = geometry_data.get('total_length', 0)
+            
+            material_cost = calc.calculate_material_cost(cutting_length, thickness, material)
+            labor_cost = calc.calculate_labor_cost(machining_time, material)
+            setup_cost = 500.00
+            subtotal = (material_cost + labor_cost + setup_cost) * max(quantity, 1)
+            gst = subtotal * 0.18
+            final_total = subtotal + gst
         
         summary_data = [
             [
@@ -537,7 +550,7 @@ class PDFGenerator:
         return elements
     
     def _create_detailed_cost_breakdown(self, geometry_data: Dict, material: str, thickness: float,
-                                       machining_time: float, total_cost: float, quantity: int):
+                                       machining_time: float, total_cost: float, quantity: int, total_cost_per_part: float = None):
         """Create detailed cost breakdown section"""
         elements = []
         
@@ -551,57 +564,105 @@ class PDFGenerator:
         )
         elements.append(Paragraph("Cost Breakdown", section_header))
         
-        # Calculate individual costs
-        from cost_calculator import CostCalculator
-        calc = CostCalculator()
-        # Per-part costs
-        per_part_material_cost = calc.calculate_material_cost(geometry_data['total_length'], thickness, material)
-        per_part_labor_cost = calc.calculate_labor_cost(machining_time, material)
-        setup_cost = 500.00  # Standard setup fee (per job)
         qty = max(quantity, 1)
         
-        # Total costs with respect to quantity
-        material_cost = per_part_material_cost * qty
-        labor_cost = per_part_labor_cost * qty
-        
-        # Calculate base subtotal (material + laser cutting service + setup)
-        subtotal_before_tax = material_cost + labor_cost + setup_cost
-        
-        # Calculate GST (18%)
-        tax_rate = 0.18  # 18% GST
-        tax_amount = subtotal_before_tax * tax_rate
-        
-        # Final total should include GST
-        calculated_total = subtotal_before_tax + tax_amount
-        
-        # Final total including GST
-        final_total = subtotal_before_tax + tax_amount
+        # If total_cost_per_part is provided, use it directly; otherwise calculate
+        if total_cost_per_part is not None and total_cost_per_part > 0:
+            # total_cost_per_part in database is the subtotal per part (before GST)
+            # Calculate subtotal before tax
+            subtotal_before_tax = total_cost_per_part * qty
+            
+            # If total_cost is provided, use it as subtotal; otherwise use cost_per_part * quantity
+            if total_cost is not None and total_cost > 0:
+                subtotal_before_tax = total_cost  # total_cost in DB is subtotal
+            
+            # Calculate GST (18%)
+            tax_rate = 0.18
+            tax_amount = subtotal_before_tax * tax_rate
+            
+            # Final total = subtotal + GST
+            final_total = subtotal_before_tax + tax_amount
+            
+            # For display purposes, we'll show simplified breakdown
+            per_part_subtotal = subtotal_before_tax / qty
+            per_part_material_cost = per_part_subtotal * 0.5  # Estimate
+            per_part_labor_cost = per_part_subtotal * 0.4     # Estimate
+            setup_cost = per_part_subtotal * 0.1 * qty        # Estimate
+            material_cost = per_part_material_cost * qty
+            labor_cost = per_part_labor_cost * qty
+        else:
+            # Calculate individual costs (original method)
+            from cost_calculator import CostCalculator
+            calc = CostCalculator()
+            # Per-part costs
+            per_part_material_cost = calc.calculate_material_cost(geometry_data.get('total_length', 0), thickness, material)
+            per_part_labor_cost = calc.calculate_labor_cost(machining_time, material)
+            setup_cost = 500.00  # Standard setup fee (per job)
+            
+            # Total costs with respect to quantity
+            material_cost = per_part_material_cost * qty
+            labor_cost = per_part_labor_cost * qty
+            
+            # If total_cost is provided, treat it as subtotal (before GST)
+            if total_cost is not None and total_cost > 0:
+                subtotal_before_tax = total_cost  # total_cost in DB is subtotal
+            else:
+                # Calculate base subtotal (material + laser cutting service + setup)
+                subtotal_before_tax = material_cost + labor_cost + setup_cost
+            
+            # Calculate GST (18%)
+            tax_rate = 0.18  # 18% GST
+            tax_amount = subtotal_before_tax * tax_rate
+            
+            # Final total = subtotal + GST
+            final_total = subtotal_before_tax + tax_amount
         
         # Cost breakdown table
-        # Get hourly rate and calculate per-minute rate
+        # Get hourly rate and calculate per-minute rate (only needed for detailed breakdown)
+        from cost_calculator import CostCalculator
+        calc = CostCalculator()
         hourly_rate = calc.machine_rates.get(material.lower(), 400.0)
         per_minute_rate = hourly_rate / 60.0
         
         # Convert all table cells with HTML to Paragraph objects
-        cost_data = [
-            [Paragraph('<b>Description</b>', self.styles['Normal']), 
-             Paragraph('<b>Specifications</b>', self.styles['Normal']), 
-             Paragraph('<b>Quantity</b>', self.styles['Normal']), 
-             Paragraph('<b>Unit Price</b>', self.styles['Normal']), 
-             Paragraph('<b>Amount (Rs.)</b>', self.styles['Normal'])],
-            ['Material Cost', f"{material.capitalize()} ({thickness}mm)", 
-             f"{qty} pcs", 
-             f"Rs. {per_part_material_cost:,.2f} / part",
-             f"Rs. {material_cost:,.2f}"],
-            ['Laser Cutting Service', f"Time-based machining", 
-             f"{qty} pcs × {machining_time:.1f} min", 
-             f"Rs. {per_minute_rate:.2f}/min",
-             f"Rs. {labor_cost:,.2f}"],
-            ['Material Handling', 'Material positioning', '1', 'Rs. 500.00', 'Rs. 500.00'],
-            ['', '', '', Paragraph('<b>Subtotal:</b>', self.styles['Normal']), Paragraph(f'<b>Rs. {subtotal_before_tax:,.2f}</b>', self.styles['Normal'])],
-            ['', '', '', Paragraph('<b>GST (18%):</b>', self.styles['Normal']), Paragraph(f'<b>Rs. {tax_amount:,.2f}</b>', self.styles['Normal'])],
-            ['', '', '', Paragraph('<b>TOTAL:</b>', self.styles['Normal']), Paragraph(f'<b>Rs. {final_total:,.2f}</b>', self.styles['Normal'])]
-        ]
+        # If total_cost_per_part is provided, show it directly
+        if total_cost_per_part is not None and total_cost_per_part > 0:
+            # Show cost per part as the main line item
+            cost_data = [
+                [Paragraph('<b>Description</b>', self.styles['Normal']), 
+                 Paragraph('<b>Specifications</b>', self.styles['Normal']), 
+                 Paragraph('<b>Quantity</b>', self.styles['Normal']), 
+                 Paragraph('<b>Unit Price</b>', self.styles['Normal']), 
+                 Paragraph('<b>Amount (Rs.)</b>', self.styles['Normal'])],
+                ['CNC Machining Service', f"{material.capitalize()} ({thickness}mm) - {machining_time:.1f} min", 
+                 f"{qty} pcs", 
+                 f"Rs. {total_cost_per_part:,.2f} / part",
+                 f"Rs. {subtotal_before_tax:,.2f}"],
+                ['', '', '', Paragraph('<b>Subtotal:</b>', self.styles['Normal']), Paragraph(f'<b>Rs. {subtotal_before_tax:,.2f}</b>', self.styles['Normal'])],
+                ['', '', '', Paragraph('<b>GST (18%):</b>', self.styles['Normal']), Paragraph(f'<b>Rs. {tax_amount:,.2f}</b>', self.styles['Normal'])],
+                ['', '', '', Paragraph('<b>TOTAL:</b>', self.styles['Normal']), Paragraph(f'<b>Rs. {final_total:,.2f}</b>', self.styles['Normal'])]
+            ]
+        else:
+            # Original detailed breakdown
+            cost_data = [
+                [Paragraph('<b>Description</b>', self.styles['Normal']), 
+                 Paragraph('<b>Specifications</b>', self.styles['Normal']), 
+                 Paragraph('<b>Quantity</b>', self.styles['Normal']), 
+                 Paragraph('<b>Unit Price</b>', self.styles['Normal']), 
+                 Paragraph('<b>Amount (Rs.)</b>', self.styles['Normal'])],
+                ['Material Cost', f"{material.capitalize()} ({thickness}mm)", 
+                 f"{qty} pcs", 
+                 f"Rs. {per_part_material_cost:,.2f} / part",
+                 f"Rs. {material_cost:,.2f}"],
+                ['Laser Cutting Service', f"Time-based machining", 
+                 f"{qty} pcs × {machining_time:.1f} min", 
+                 f"Rs. {per_minute_rate:.2f}/min",
+                 f"Rs. {labor_cost:,.2f}"],
+                ['Material Handling', 'Material positioning', '1', 'Rs. 500.00', 'Rs. 500.00'],
+                ['', '', '', Paragraph('<b>Subtotal:</b>', self.styles['Normal']), Paragraph(f'<b>Rs. {subtotal_before_tax:,.2f}</b>', self.styles['Normal'])],
+                ['', '', '', Paragraph('<b>GST (18%):</b>', self.styles['Normal']), Paragraph(f'<b>Rs. {tax_amount:,.2f}</b>', self.styles['Normal'])],
+                ['', '', '', Paragraph('<b>TOTAL:</b>', self.styles['Normal']), Paragraph(f'<b>Rs. {final_total:,.2f}</b>', self.styles['Normal'])]
+            ]
         
         cost_table = Table(cost_data, colWidths=[1.5*inch, 1.8*inch, 1*inch, 1.2*inch, 1.5*inch])
         cost_table.setStyle(TableStyle([

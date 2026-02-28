@@ -12,6 +12,7 @@ import tempfile
 from pdf_utils import extract_pdf_text
 from datetime import datetime
 from pymongo import MongoClient
+from bson import ObjectId
 
 # Load environment variables from .env file
 try:
@@ -237,6 +238,85 @@ def download_pdf(filename):
     except FileNotFoundError:
         return jsonify({'error': 'PDF not found'}), 404
 
+@app.route('/generate-pdf-from-db/<quote_id>')
+@login_required
+def generate_pdf_from_db(quote_id):
+    """Generate PDF from database values (with updated/edited values)"""
+    try:
+        # Convert string ID to ObjectId
+        obj_id = ObjectId(quote_id)
+    except Exception:
+        flash('Invalid quotation ID', 'error')
+        return redirect(url_for('history'))
+    
+    try:
+        # Fetch quotation from database
+        quotation = calculations_collection.find_one({'_id': obj_id})
+        
+        if not quotation:
+            flash('Quotation not found', 'error')
+            return redirect(url_for('history'))
+        
+        # Extract data from database
+        material = quotation.get('input', {}).get('material', 'steel')
+        thickness = quotation.get('input', {}).get('thickness', 1.0)
+        quantity = quotation.get('input', {}).get('quantity', 1)
+        total_length = quotation.get('calculated', {}).get('total_length', 0)
+        machining_time = quotation.get('calculated', {}).get('machining_time', 0)
+        total_cost = quotation.get('quotation', {}).get('total_cost', 0)
+        total_cost_per_part = quotation.get('quotation', {}).get('total_cost_per_part', 0)
+        
+        # Create minimal geometry_data structure from database values
+        # This is needed for PDF generation but we only have total_length stored
+        geometry_data = {
+            'total_length': total_length,
+            'line_count': 0,
+            'arc_count': 0,
+            'circle_count': 0,
+            'polyline_count': 0,
+            'spline_count': 0,
+            'ellipse_count': 0,
+            'bounding_box': {
+                'width': 0,
+                'height': 0,
+                'area': 0
+            },
+            'layer_stats': {},
+            'entities': []
+        }
+        
+        # Generate PDF with updated values (including cost per part)
+        filename = pdf_generator.generate_quotation(
+            geometry_data,
+            material,
+            thickness,
+            machining_time,
+            total_cost,
+            quantity,
+            total_cost_per_part
+        )
+        
+        # Update MongoDB record with new PDF info
+        try:
+            calculations_collection.update_one(
+                {'_id': obj_id},
+                {
+                    '$set': {
+                        'quotation.pdf_filename': filename,
+                        'quotation.pdf_generated_at': datetime.utcnow(),
+                    }
+                },
+            )
+        except Exception as e:
+            print(f"MongoDB update error (non-critical): {e}")
+        
+        flash('PDF generated successfully with updated values!', 'success')
+        return redirect(url_for('download_pdf', filename=filename))
+        
+    except Exception as e:
+        flash(f'Error generating PDF: {str(e)}', 'error')
+        return redirect(url_for('history'))
+
 @app.route('/features/<result_id>')
 def features(result_id):
     data = results_cache.get(result_id)
@@ -423,6 +503,136 @@ def spec():
         return Response(text, mimetype='text/plain')
     except Exception as e:
         return Response(str(e), mimetype='text/plain', status=500)
+
+@app.route('/history')
+@login_required
+def history():
+    """Display all quotations from database"""
+    try:
+        # Fetch all quotations from MongoDB, sorted by creation date (newest first)
+        quotations = list(calculations_collection.find().sort('created_at', -1))
+        
+        # Convert ObjectId to string for JSON serialization
+        for quote in quotations:
+            quote['_id'] = str(quote['_id'])
+            # Format date for display
+            if 'created_at' in quote:
+                quote['created_at_formatted'] = quote['created_at'].strftime('%Y-%m-%d %H:%M:%S') if isinstance(quote['created_at'], datetime) else str(quote['created_at'])
+        
+        return render_template('history.html', quotations=quotations)
+    except Exception as e:
+        flash(f'Error loading quotations: {str(e)}', 'error')
+        return render_template('history.html', quotations=[])
+
+@app.route('/delete/<quote_id>', methods=['POST'])
+@login_required
+def delete_quotation(quote_id):
+    """Delete a quotation"""
+    try:
+        # Convert string ID to ObjectId
+        obj_id = ObjectId(quote_id)
+    except Exception:
+        flash('Invalid quotation ID', 'error')
+        return redirect(url_for('history'))
+    
+    try:
+        # Find the quotation to get PDF filename if it exists
+        quotation = calculations_collection.find_one({'_id': obj_id})
+        
+        if not quotation:
+            flash('Quotation not found', 'error')
+            return redirect(url_for('history'))
+        
+        # Delete PDF file if it exists
+        pdf_filename = quotation.get('quotation', {}).get('pdf_filename')
+        if pdf_filename:
+            pdf_path = os.path.join('temp_pdfs', pdf_filename)
+            try:
+                if os.path.exists(pdf_path):
+                    os.remove(pdf_path)
+            except Exception as e:
+                print(f"Error deleting PDF file: {e}")
+        
+        # Delete from MongoDB
+        result = calculations_collection.delete_one({'_id': obj_id})
+        
+        if result.deleted_count > 0:
+            flash('Quotation deleted successfully!', 'success')
+        else:
+            flash('Quotation not found', 'error')
+        
+        return redirect(url_for('history'))
+    except Exception as e:
+        flash(f'Error deleting quotation: {str(e)}', 'error')
+        return redirect(url_for('history'))
+
+@app.route('/edit/<quote_id>', methods=['GET', 'POST'])
+@login_required
+def edit_quotation(quote_id):
+    """Edit a quotation"""
+    try:
+        # Convert string ID to ObjectId
+        obj_id = ObjectId(quote_id)
+    except Exception:
+        flash('Invalid quotation ID', 'error')
+        return redirect(url_for('history'))
+    
+    if request.method == 'POST':
+        try:
+            # Get form data
+            material = request.form.get('material', '').strip()
+            thickness = float(request.form.get('thickness', 0))
+            quantity = int(request.form.get('quantity', 1))
+            total_cost_per_part = float(request.form.get('total_cost_per_part', 0))
+            total_cost = float(request.form.get('total_cost', 0))
+            
+            # Recalculate if needed (optional - you can skip recalculation and just update values)
+            # For now, we'll just update the stored values
+            update_data = {
+                'input.material': material,
+                'input.thickness': thickness,
+                'input.quantity': quantity,
+                'quotation.total_cost_per_part': total_cost_per_part,
+                'quotation.total_cost': total_cost,
+                'updated_at': datetime.utcnow()
+            }
+            
+            # Update in MongoDB
+            result = calculations_collection.update_one(
+                {'_id': obj_id},
+                {'$set': update_data}
+            )
+            
+            if result.modified_count > 0:
+                flash('Quotation updated successfully!', 'success')
+            else:
+                flash('No changes made or quotation not found', 'warning')
+            
+            return redirect(url_for('history'))
+            
+        except ValueError as e:
+            flash(f'Invalid input: {str(e)}', 'error')
+        except Exception as e:
+            flash(f'Error updating quotation: {str(e)}', 'error')
+    
+    # GET request - show edit form
+    try:
+        quotation = calculations_collection.find_one({'_id': obj_id})
+        if not quotation:
+            flash('Quotation not found', 'error')
+            return redirect(url_for('history'))
+        
+        # Convert ObjectId to string
+        quotation['_id'] = str(quotation['_id'])
+        
+        # Format date
+        if 'created_at' in quotation:
+            quotation['created_at_formatted'] = quotation['created_at'].strftime('%Y-%m-%d %H:%M:%S') if isinstance(quotation['created_at'], datetime) else str(quotation['created_at'])
+        
+        return render_template('edit_quotation.html', quotation=quotation)
+    except Exception as e:
+        flash(f'Error loading quotation: {str(e)}', 'error')
+        return redirect(url_for('history'))
 
 def _extract_brochure_sections(text: str):
     """

@@ -196,6 +196,9 @@
                 <ul class="navbar-nav ms-auto align-items-lg-center">
                     <li class="nav-item me-lg-3"><a class="nav-link" href="#features">Features</a></li>
                     <li class="nav-item me-lg-3"><a class="nav-link" href="/cnc-cutting">CNC Cutting</a></li>
+                    {% if is_logged_in %}
+                    <li class="nav-item me-lg-3"><a class="nav-link" href="/history"><i class="fas fa-history me-1"></i>History</a></li>
+                    {% endif %}
                     <li class="nav-item me-lg-3"><a class="nav-link" href="/pricing">Pricing</a></li>
                     <li class="nav-item me-lg-3"><a class="nav-link" href="/faq">FAQ</a></li>
                     <li class="nav-item me-lg-3"><a class="nav-link" href="/about">About</a></li>
@@ -273,10 +276,10 @@
                 <div class="col-md-3 col-sm-6">
                     <div class="stat-card">
                         <div class="stat-label">
-                            <i class="fas fa-rupee-sign me-2"></i>Total Cost
+                            <i class="fas fa-rupee-sign me-2"></i>Cost per Item
                         </div>
-                        <div class="stat-value">₹{{ "%.2f"|format(total_cost) }}</div>
-                        <div class="text-muted small">INR ({{ quantity|default(1) }} pcs)</div>
+                        <div class="stat-value">₹{{ "%.2f"|format(total_cost_per_part) }}</div>
+                        <div class="text-muted small">INR per unit</div>
                     </div>
                 </div>
                 <div class="col-md-3 col-sm-6">
