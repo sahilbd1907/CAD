@@ -34,7 +34,7 @@ calculations_collection = db['calculations']
 
 # Simple in-memory users (replace with real DB in production)
 USERS = {
-    "admin": generate_password_hash("admin123")
+    "admin": generate_password_hash("@Dmin123")
 }
 
 def login_required(f):
