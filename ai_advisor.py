@@ -44,7 +44,7 @@ class AIAdvisor:
             # OpenRouter configuration
             self.api_key = env_vars.get('OPENROUTER_API_KEY', os.getenv('OPENROUTER_API_KEY', ''))
             self.api_base = 'https://openrouter.ai/api/v1'
-            self.model = env_vars.get('OPENROUTER_MODEL', os.getenv('OPENROUTER_MODEL', 'meta-llama/llama-3.1-8b-instruct:free'))
+            self.model = env_vars.get('OPENROUTER_MODEL', os.getenv('OPENROUTER_MODEL', 'openrouter/free'))
             self.provider = 'openrouter'
         else:
             # OpenAI configuration (default)

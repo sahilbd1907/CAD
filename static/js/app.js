@@ -1,3 +1,9 @@
+(function applySavedThemeEarly() {
+  if (localStorage.getItem('theme') === 'dark') {
+    document.documentElement.classList.add('theme-dark');
+  }
+})();
+
 document.addEventListener('DOMContentLoaded', function() {
   const form = document.getElementById('quotationForm');
   const fileInput = document.getElementById('fileInput');
@@ -25,12 +31,13 @@ document.addEventListener('DOMContentLoaded', function() {
     setTheme(next);
   });
   function setTheme(mode) {
-    if (mode === 'dark') {
-      document.documentElement.classList.add('theme-dark');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('theme-dark');
-      localStorage.setItem('theme', 'light');
+    const isDark = mode === 'dark';
+    document.documentElement.classList.toggle('theme-dark', isDark);
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    const icon = themeToggle?.querySelector('i');
+    if (icon) {
+      icon.classList.toggle('fa-moon', !isDark);
+      icon.classList.toggle('fa-sun', isDark);
     }
   }
 

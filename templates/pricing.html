@@ -9,7 +9,7 @@
     <link href="/static/css/styles.css" rel="stylesheet">
     <link href="/branding.css" rel="stylesheet">
 </head>
-<body class="bg-app">
+<body class="bg-app d-flex flex-column min-vh-100">
     <nav class="navbar navbar-expand-lg navbar-glass sticky-top">
         <div class="container">
             <a class="navbar-brand fw-bold d-flex align-items-center" href="/">
@@ -21,78 +21,274 @@
             </button>
             <div class="collapse navbar-collapse" id="navContent">
                 <ul class="navbar-nav ms-auto align-items-lg-center">
-                    <li class="nav-item me-lg-3"><a class="nav-link" href="#features">Features</a></li>
+                    <li class="nav-item me-lg-3"><a class="nav-link" href="/dashboard#features">Features</a></li>
                     <li class="nav-item me-lg-3"><a class="nav-link" href="/cnc-cutting">CNC Cutting</a></li>
                     {% if is_logged_in %}
                     <li class="nav-item me-lg-3"><a class="nav-link" href="/history"><i class="fas fa-history me-1"></i>History</a></li>
                     {% endif %}
-                    <li class="nav-item me-lg-3"><a class="nav-link" href="/pricing">Pricing</a></li>
+                    <li class="nav-item me-lg-3"><a class="nav-link active" href="/pricing">Pricing</a></li>
                     <li class="nav-item me-lg-3"><a class="nav-link" href="/faq">FAQ</a></li>
                     <li class="nav-item me-lg-3"><a class="nav-link" href="/about">About</a></li>
                     <li class="nav-item me-lg-3"><a class="nav-link" href="/contact">Contact</a></li>
                     {% if is_logged_in %}
-                    <li class="nav-item me-lg-3">
-                        <a class="nav-link" href="#">
-                            <i class="fas fa-user me-1"></i>{{ current_user }}
-                        </a>
-                    </li>
-                    <li class="nav-item me-lg-3">
-                        <a class="nav-link" href="/logout">
-                            <i class="fas fa-sign-out-alt me-1"></i>Logout
-                        </a>
-                    </li>
+                    <li class="nav-item me-lg-3"><a class="nav-link" href="#"><i class="fas fa-user me-1"></i>{{ current_user }}</a></li>
+                    <li class="nav-item me-lg-3"><a class="nav-link" href="/logout"><i class="fas fa-sign-out-alt me-1"></i>Logout</a></li>
                     {% else %}
-                    <li class="nav-item me-lg-3">
-                        <a class="nav-link" href="/login">
-                            <i class="fas fa-sign-in-alt me-1"></i>Login
-                        </a>
-                    </li>
+                    <li class="nav-item me-lg-3"><a class="nav-link" href="/login"><i class="fas fa-sign-in-alt me-1"></i>Login</a></li>
                     {% endif %}
                     <li class="nav-item">
-                        <button id="themeToggle" class="btn btn-sm btn-outline-secondary">
-                            <i class="fa-solid fa-moon"></i>
-                        </button>
+                        <button id="themeToggle" class="btn btn-sm btn-outline-secondary"><i class="fa-solid fa-moon"></i></button>
                     </li>
                 </ul>
             </div>
         </div>
     </nav>
-    <main class="py-5">
+
+    <main class="py-5 flex-grow-1">
         <div class="container">
-            <h1 class="fw-bold mb-4">Pricing</h1>
-            <p class="text-muted">Contact us for tailored pricing based on material, thickness, complexity, and volume.</p>
-            <div class="row g-4 mt-2">
-                <div class="col-md-4">
-                    <div class="feature-card h-100">
+            <section class="page-hero mb-5">
+                <span class="badge rounded-pill badge-pill mb-3">Platform plans</span>
+                <h1 class="fw-bold display-6 mb-3">Pricing for the CNC quotation platform</h1>
+                <p class="lead text-muted mb-0 col-lg-10">
+                    Choose a plan for DXF analysis, PDF quotes, and AI optimization. Actual <strong>cutting job rates</strong>
+                    (material, thickness, length) are calculated per upload inside the app—plans below cover software access and support.
+                </p>
+            </section>
+
+            <div class="row g-4 align-items-stretch">
+                <!-- Starter -->
+                <div class="col-lg-4">
+                    <div class="feature-card h-100 pricing-plan-card" id="plan-starter-card">
                         <div class="feature-icon"><i class="fa-solid fa-seedling"></i></div>
-                        <h5>Starter</h5>
-                        <p class="text-muted">Ideal for prototypes and one-offs.</p>
+                        <h2 class="h5 fw-bold">Starter</h2>
+                        <p class="text-muted small mb-2">Freelancers &amp; occasional quotes</p>
+                        <div class="mb-3">
+                            <span class="display-6 fw-bold text-primary">₹0</span>
+                            <span class="text-muted">/ month</span>
+                        </div>
+                        <ul class="list-unstyled text-muted small mb-4">
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>15 quotations / month</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>DXF upload &amp; geometry report</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>PDF download (watermarked)</li>
+                        </ul>
+                        <button class="btn btn-outline-primary w-100 pricing-toggle" type="button"
+                                data-bs-toggle="collapse" data-bs-target="#plan-starter-details"
+                                aria-expanded="false" aria-controls="plan-starter-details">
+                            <i class="fas fa-chevron-down me-2 toggle-icon"></i>View plan details
+                        </button>
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <div class="feature-card h-100">
+
+                <!-- Business -->
+                <div class="col-lg-4">
+                    <div class="feature-card h-100 pricing-plan-card border-primary position-relative" id="plan-business-card" style="border-width: 2px !important;">
+                        <span class="badge bg-primary position-absolute top-0 end-0 m-3">Popular</span>
                         <div class="feature-icon"><i class="fa-solid fa-layer-group"></i></div>
-                        <h5>Business</h5>
-                        <p class="text-muted">For small batch production runs.</p>
+                        <h2 class="h5 fw-bold">Business</h2>
+                        <p class="text-muted small mb-2">Job shops &amp; small batch teams</p>
+                        <div class="mb-3">
+                            <span class="display-6 fw-bold text-primary">₹2,499</span>
+                            <span class="text-muted">/ month</span>
+                        </div>
+                        <ul class="list-unstyled text-muted small mb-4">
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>150 quotations / month</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Full AI advisor &amp; path / nesting</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Quotation history &amp; edit</li>
+                        </ul>
+                        <button class="btn btn-primary w-100 pricing-toggle" type="button"
+                                data-bs-toggle="collapse" data-bs-target="#plan-business-details"
+                                aria-expanded="false" aria-controls="plan-business-details">
+                            <i class="fas fa-chevron-down me-2 toggle-icon"></i>View plan details
+                        </button>
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <div class="feature-card h-100">
+
+                <!-- Enterprise -->
+                <div class="col-lg-4">
+                    <div class="feature-card h-100 pricing-plan-card" id="plan-enterprise-card">
                         <div class="feature-icon"><i class="fa-solid fa-industry"></i></div>
-                        <h5>Enterprise</h5>
-                        <p class="text-muted">Custom SLAs, volume discounts, and more.</p>
+                        <h2 class="h5 fw-bold">Enterprise</h2>
+                        <p class="text-muted small mb-2">OEMs &amp; multi-site fabrication</p>
+                        <div class="mb-3">
+                            <span class="display-6 fw-bold text-primary">Custom</span>
+                        </div>
+                        <ul class="list-unstyled text-muted small mb-4">
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Unlimited quotations</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Multi-user &amp; role access</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Dedicated success manager</li>
+                        </ul>
+                        <button class="btn btn-outline-primary w-100 pricing-toggle" type="button"
+                                data-bs-toggle="collapse" data-bs-target="#plan-enterprise-details"
+                                aria-expanded="false" aria-controls="plan-enterprise-details">
+                            <i class="fas fa-chevron-down me-2 toggle-icon"></i>View plan details
+                        </button>
                     </div>
                 </div>
             </div>
+
+            <div id="pricingDetailsAccordion">
+            <div class="collapse pricing-details-collapse" id="plan-starter-details" data-bs-parent="#pricingDetailsAccordion">
+                <div class="card card-elevated border-0 mt-3">
+                    <div class="card-body p-4 p-lg-5">
+                        <h3 class="h5 fw-bold mb-3"><i class="fas fa-seedling text-primary me-2"></i>Starter — full breakdown</h3>
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <h4 class="h6 fw-semibold">Included</h4>
+                                <ul class="text-muted mb-0">
+                                    <li>1 user login</li>
+                                    <li>DXF files up to 16 MB</li>
+                                    <li>6 materials: steel, aluminum, plastic, wood, brass, copper</li>
+                                    <li>Cost &amp; time estimate from cutting length + thickness</li>
+                                    <li>Basic PDF quotation (company branding, line items)</li>
+                                    <li>Community email support (48–72 h response)</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h4 class="h6 fw-semibold">Not included</h4>
+                                <ul class="text-muted mb-0">
+                                    <li>AI material &amp; design recommendations</li>
+                                    <li>TSP path optimization &amp; nesting visuals</li>
+                                    <li>MongoDB quotation history / edit workflow</li>
+                                    <li>Custom logo on PDF &amp; white-label</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <hr class="my-4">
+                        <p class="text-muted small mb-3">
+                            <strong>Typical use:</strong> 2–3 prototype quotes per week. Upgrade when you need AI or batch history.
+                        </p>
+                        {% if is_logged_in %}
+                        <a href="/dashboard" class="btn btn-primary">Use Starter (current access)</a>
+                        {% else %}
+                        <a href="/login" class="btn btn-primary">Get started free</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="collapse pricing-details-collapse" id="plan-business-details" data-bs-parent="#pricingDetailsAccordion">
+                <div class="card card-elevated border-0 mt-3">
+                    <div class="card-body p-4 p-lg-5">
+                        <h3 class="h5 fw-bold mb-3"><i class="fas fa-layer-group text-primary me-2"></i>Business — full breakdown</h3>
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <h4 class="h6 fw-semibold">Everything in Starter, plus</h4>
+                                <ul class="text-muted mb-0">
+                                    <li>150 quotations / month (₹18 per extra quote)</li>
+                                    <li>Branded PDF without watermark</li>
+                                    <li>Full AI advisor: materials, design, manufacturability</li>
+                                    <li>Path optimization (TSP) &amp; sheet nesting analysis</li>
+                                    <li>Saved history, edit values, regenerate PDF</li>
+                                    <li>Up to 3 team logins</li>
+                                    <li>Email support within 1 business day</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h4 class="h6 fw-semibold">Indicative machining rates (in-app)</h4>
+                                <p class="text-muted small">Per-job pricing uses your geometry—not a flat subscription fee:</p>
+                                <table class="table table-sm spec-table mb-0">
+                                    <tbody>
+                                        <tr><td>Laser machine rate (reference)</td><td>~₹4,000 / hour</td></tr>
+                                        <tr><td>Typical mild steel 3 mm</td><td>~₹250–₹800 / part*</td></tr>
+                                        <tr><td>Small batch (10+ qty)</td><td>Volume discount in quote</td></tr>
+                                    </tbody>
+                                </table>
+                                <p class="text-muted small mt-2 mb-0">*Depends on cut length, pierces, and material.</p>
+                            </div>
+                        </div>
+                        <hr class="my-4">
+                        <p class="mb-3"><strong>Billed annually?</strong> ₹24,990 / year (2 months free).</p>
+                        <a href="/contact" class="btn btn-primary me-2">Request Business plan</a>
+                        <a href="/login" class="btn btn-outline-secondary">Sign in to quote</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="collapse pricing-details-collapse" id="plan-enterprise-details" data-bs-parent="#pricingDetailsAccordion">
+                <div class="card card-elevated border-0 mt-3">
+                    <div class="card-body p-4 p-lg-5">
+                        <h3 class="h5 fw-bold mb-3"><i class="fas fa-industry text-primary me-2"></i>Enterprise — full breakdown</h3>
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <h4 class="h6 fw-semibold">Everything in Business, plus</h4>
+                                <ul class="text-muted mb-0">
+                                    <li>Unlimited quotations &amp; API access (roadmap)</li>
+                                    <li>10+ users, SSO optional</li>
+                                    <li>Custom material library &amp; machine rates</li>
+                                    <li>On-premise or private cloud deployment option</li>
+                                    <li>99.5% uptime SLA &amp; priority phone support</li>
+                                    <li>Quarterly training for estimators &amp; operators</li>
+                                    <li>Integration with ERP / inventory (project scope)</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h4 class="h6 fw-semibold">Indicative investment</h4>
+                                <ul class="text-muted mb-0">
+                                    <li><strong>From ₹9,999 / month</strong> — 5–15 users, standard cloud</li>
+                                    <li><strong>From ₹18,000 / month</strong> — unlimited users + custom rates</li>
+                                    <li><strong>One-time setup:</strong> ₹25,000–₹75,000 (branding, migration, training)</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <hr class="my-4">
+                        <a href="/contact" class="btn btn-primary btn-lg"><i class="fas fa-envelope me-2"></i>Contact sales for a quote</a>
+                    </div>
+                </div>
+            </div>
+
+            </div>
+
+            <section class="card card-elevated border-0 mt-5">
+                <div class="card-body p-4">
+                    <h2 class="h5 fw-bold mb-3"><i class="fas fa-circle-info text-primary me-2"></i>How per-part cutting cost is calculated</h2>
+                    <p class="text-muted mb-3">Inside the dashboard, each DXF quote uses the same logic as Indian job-shop estimating:</p>
+                    <div class="row g-3 text-muted small">
+                        <div class="col-md-4">
+                            <strong class="d-block text-body mb-1">1. Geometry</strong>
+                            Total cut length, complexity score, and bounding box from your DXF.
+                        </div>
+                        <div class="col-md-4">
+                            <strong class="d-block text-body mb-1">2. Process time</strong>
+                            Feed rate by material &amp; thickness → machining minutes × machine hourly rate (₹/hr).
+                        </div>
+                        <div class="col-md-4">
+                            <strong class="d-block text-body mb-1">3. Material + quantity</strong>
+                            Sheet volume cost + quantity multiplier; editable before PDF export.
+                        </div>
+                    </div>
+                </div>
+            </section>
         </div>
     </main>
-    <footer class="footer py-4">
+
+    <footer class="footer py-4 mt-auto">
         <div class="container d-flex flex-column flex-lg-row justify-content-between align-items-center gap-2">
             <div class="text-muted small">© <span id="yearNow"></span> Tech support</div>
+            <a href="/contact" class="text-decoration-none small">Questions? Contact us</a>
         </div>
     </footer>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="/static/js/app.js"></script>
+    <script>
+        document.querySelectorAll('.pricing-toggle').forEach(function (btn) {
+            var target = document.querySelector(btn.getAttribute('data-bs-target'));
+            if (!target) return;
+            target.addEventListener('show.bs.collapse', function () {
+                btn.querySelector('.toggle-icon').classList.replace('fa-chevron-down', 'fa-chevron-up');
+                btn.closest('.pricing-plan-card')?.classList.add('pricing-plan-active');
+            });
+            target.addEventListener('hide.bs.collapse', function () {
+                btn.querySelector('.toggle-icon').classList.replace('fa-chevron-up', 'fa-chevron-down');
+                btn.closest('.pricing-plan-card')?.classList.remove('pricing-plan-active');
+            });
+        });
+        document.querySelectorAll('.pricing-details-collapse').forEach(function (el) {
+            el.addEventListener('show.bs.collapse', function () {
+                document.querySelectorAll('.pricing-details-collapse.show').forEach(function (open) {
+                    if (open !== el) bootstrap.Collapse.getOrCreateInstance(open, { toggle: false }).hide();
+                });
+            });
+        });
+    </script>
 </body>
 </html>
-

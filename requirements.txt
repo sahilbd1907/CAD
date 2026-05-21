@@ -1,2 +1,18 @@
-reportlab>=4.0.0
-pymongo>=4.0.0
+# Web application
+Flask==2.3.3
+Werkzeug==2.3.7
+
+# CAD processing and PDF output
+ezdxf==1.1.1
+reportlab==4.0.4
+PyPDF2==3.0.1
+
+# Database (dnspython required for mongodb+srv URIs)
+pymongo==4.17.0
+dnspython==2.8.0
+
+# AI recommendations (optional; app falls back without API key)
+openai==2.14.0
+
+# Environment variables (.env)
+python-dotenv==1.2.1

@@ -9,7 +9,6 @@ from cost_calculator import CostCalculator
 from pdf_generator import PDFGenerator
 from ai_advisor import AIAdvisor
 import tempfile
-from pdf_utils import extract_pdf_text
 from datetime import datetime
 from pymongo import MongoClient
 from bson import ObjectId
@@ -21,10 +20,37 @@ try:
 except ImportError:
     pass  # python-dotenv not installed, use system env vars
 
+
+def _require_env(name: str) -> str:
+    value = os.environ.get(name, '').strip()
+    if not value:
+        raise RuntimeError(
+            f"Missing {name} in environment. Copy .env.example to .env and set it."
+        )
+    return value
+
+
+def _load_secret_key() -> str:
+    key = os.environ.get('SECRET_KEY', '').strip()
+    if not key or key == 'change-this-secret-key':
+        raise RuntimeError(
+            "SECRET_KEY must be set in .env (use a long random string). "
+            'Generate one: python -c "import secrets; print(secrets.token_hex(32))"'
+        )
+    return key
+
+
+def _load_users() -> dict:
+    """Admin login from .env — never commit real passwords to source code."""
+    username = _require_env('ADMIN_USERNAME')
+    password = _require_env('ADMIN_PASSWORD')
+    return {username: generate_password_hash(password)}
+
+
 app = Flask(__name__, static_url_path='/static', static_folder='static')
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 app.config['UPLOAD_FOLDER'] = 'uploads'
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'change-this-secret-key')
+app.config['SECRET_KEY'] = _load_secret_key()
 
 # MongoDB configuration
 MONGODB_URI = os.environ.get('MONGODB_URI', 'mongodb://localhost:27017/cad_app')
@@ -32,10 +58,7 @@ mongo_client = MongoClient(MONGODB_URI)
 db = mongo_client.get_database()
 calculations_collection = db['calculations']
 
-# Simple in-memory users (replace with real DB in production)
-USERS = {
-    "admin": generate_password_hash("@Dmin123")
-}
+USERS = _load_users()
 
 def login_required(f):
     """Require a logged-in user for protected routes."""
@@ -475,34 +498,11 @@ def faq():
 
 @app.route('/about')
 def about():
-    brochure_path = 'Brochure_Tech support 2.pdf'
-    about_text = ''
-    services = []
-    try:
-        text = extract_pdf_text(brochure_path)
-        about_text, services, _ = _extract_brochure_sections(text)
-    except Exception:
-        pass
-    return render_template('about.html', about_text=about_text, services=services)
+    return render_template('about.html')
 
 @app.route('/contact')
 def contact():
-    brochure_path = 'Brochure_Tech support 2.pdf'
-    contact_info = {}
-    try:
-        text = extract_pdf_text(brochure_path)
-        _, _, contact_info = _extract_brochure_sections(text)
-    except Exception:
-        pass
-    return render_template('contact.html', contact=contact_info)
-
-@app.route('/spec')
-def spec():
-    try:
-        text = extract_pdf_text('show_5.pdf')
-        return Response(text, mimetype='text/plain')
-    except Exception as e:
-        return Response(str(e), mimetype='text/plain', status=500)
+    return render_template('contact.html')
 
 @app.route('/history')
 @login_required
@@ -633,43 +633,6 @@ def edit_quotation(quote_id):
     except Exception as e:
         flash(f'Error loading quotation: {str(e)}', 'error')
         return redirect(url_for('history'))
-
-def _extract_brochure_sections(text: str):
-    """
-    Very simple brochure parser: splits out About/Services/Contact sections if headings exist.
-    Returns: (about_text, services_list, contact_dict)
-    """
-    lower = text.lower()
-    def find_section(start_keys, end_keys):
-        start = min((lower.find(k) for k in start_keys if lower.find(k) != -1), default=-1)
-        if start == -1:
-            return ''
-        end_positions = [lower.find(k, start + 1) for k in end_keys]
-        end_positions = [p for p in end_positions if p != -1]
-        end = min(end_positions) if end_positions else len(text)
-        return text[start:end].strip()
-
-    about_text = find_section(['about us', 'about company', 'company profile'], ['services', 'our services', 'contact', 'get in touch'])
-    services_text = find_section(['services', 'our services', 'capabilities'], ['contact', 'get in touch', 'about', 'company profile'])
-    contact_text = find_section(['contact', 'get in touch', 'reach us'], ['about', 'services'])
-
-    services = []
-    for line in services_text.splitlines():
-        line_strip = line.strip('•- \t')
-        if len(line_strip) > 4 and any(w in line_strip.lower() for w in ['cut', 'cnc', 'laser', 'water', 'fabrication', 'machin', 'plasma']):
-            services.append(line_strip)
-
-    contact = {}
-    for line in contact_text.splitlines():
-        l = line.strip()
-        if '@' in l and ' ' not in l:
-            contact['email'] = l
-        if any(k in l.lower() for k in ['phone', 'mob', 'tel', '+91']):
-            contact['phone'] = l
-        if any(k in l.lower() for k in ['address', 'pune', 'maharashtra', 'india']) and 'address' not in contact:
-            contact['address'] = l
-
-    return about_text, services, contact
 
 if __name__ == '__main__':
     app.run(debug=False, host='0.0.0.0', port=5000 , use_reloader=False)
